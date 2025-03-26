@@ -1,6 +1,7 @@
 import BestSellers from "@/components/best-sellers/best-sellers"
 import Features from "@/components/features/Features"
 import Hero from "@/components/hero/Hero"
+import Newsletter from "@/components/newsletter/Newsletter"
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <Hero />
       <Features />
       <BestSellers />
+      <Newsletter />
     </main>
   )
 }

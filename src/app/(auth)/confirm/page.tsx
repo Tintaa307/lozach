@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { FormEvent, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -18,51 +18,46 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { Lock } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 export default function OtpVerification() {
   const [otp, setOtp] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isVerified, setIsVerified] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const email = useSearchParams().get("email")
+
+  const supabase = createClient()
+
+  const handleVerify = async (e: FormEvent) => {
     e.preventDefault()
 
-    // Validate OTP
-    if (otp.length !== 6) {
-      return
-    }
-
-    setIsSubmitting(true)
-
     try {
-      // Here you would verify the OTP with your backend
-      console.log("Verifying OTP:", otp)
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.verifyOtp({
+        email: email as string,
+        token: otp,
+        type: "email",
+      })
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) {
+        console.log(error)
+        return toast.warning("A ocurrido un error, por favor intenta de nuevo.")
+      }
 
-      // Handle successful verification
-      console.log("OTP verified successfully")
+      if (session) {
+        setIsVerified(true)
+        return toast.success("Tu cuenta ha sido confirmada exitosamente.")
+      }
     } catch (error) {
-      console.error("Error verifying OTP:", error)
+      console.log(error)
+      return toast.warning("A ocurrido un error, por favor intenta de nuevo.")
     } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleResendCode = async () => {
-    try {
-      // Here you would call your API to resend the code
-      console.log("Resending code...")
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      console.log("Code resent successfully")
-
-      // Clear the inputs
-      setOtp("")
-    } catch (error) {
-      console.error("Error resending code:", error)
+      setIsVerified(false)
     }
   }
 
@@ -80,7 +75,7 @@ export default function OtpVerification() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleVerify} className="space-y-6">
             <div className="flex justify-center">
               <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                 <InputOTPGroup>
@@ -107,7 +102,6 @@ export default function OtpVerification() {
         <CardFooter className="flex justify-center">
           <Button
             variant="link"
-            onClick={handleResendCode}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
             Reenviar código

@@ -5,16 +5,103 @@ import type React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Mail, Lock, Apple, User } from "lucide-react"
+import { Mail, Lock, Apple, User, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { Label } from "@/components/ui/label"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { toast } from "sonner"
+import { createUser } from "@/actions/auth/auth"
 
 export default function LoginForm() {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle login logic here
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
+
+  const validatePasswords = () => {
+    if (password !== confirmPassword) {
+      return false
+    }
+    if (password.length < 8) {
+      return false
+    }
+    return true
   }
 
+  const supabase = createClient()
+
+  const handleSubmitWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "http://localhost:3000/auth/callback",
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      })
+
+      if (error) {
+        console.log(error)
+        return
+      }
+
+      return
+    } catch (error) {
+      console.log(error)
+
+      return
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const formData = new FormData(e.currentTarget as HTMLFormElement)
+
+      if (validatePasswords() === false) {
+        return toast.error("Las contraseñas no coinciden")
+      }
+
+      const values = {
+        name: formData.get("name") as string,
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
+      }
+
+      const response = await createUser({ values })
+
+      if (response?.status !== 200) {
+        if (typeof response?.message === "string") {
+          setIsLoading(false)
+          return toast.error(response.message)
+        }
+
+        if (response?.message instanceof Array) {
+          setIsLoading(false)
+          return response.message.forEach((error) => toast.error(error.message))
+        }
+      }
+
+      setIsLoading(false)
+      toast.success("Cuenta creada correctamente")
+      return router.push(`/confirm?email=${values.email}`)
+    } catch (error) {
+      console.error(error)
+      toast.error("Error al crear la cuenta")
+    } finally {
+      setIsLoading(false)
+    }
+  }
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md space-y-8">
@@ -46,7 +133,8 @@ export default function LoginForm() {
                 <Input
                   id="name"
                   type="name"
-                  name="fullname"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -64,8 +152,9 @@ export default function LoginForm() {
                 </div>
                 <Input
                   id="email"
-                  name="email"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -87,7 +176,8 @@ export default function LoginForm() {
                 <Input
                   id="password"
                   type="password"
-                  name="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -110,7 +200,8 @@ export default function LoginForm() {
                 <Input
                   id="confirm-password"
                   type="password"
-                  name="confirm-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -123,7 +214,11 @@ export default function LoginForm() {
             type="submit"
             className="w-full bg-black hover:bg-black/90 text-white"
           >
-            CREAR CUENTA
+            {isLoading ? (
+              <Loader2 className="animate-spin size-5 text-white" />
+            ) : (
+              "CREAR CUENTA"
+            )}
           </Button>
 
           {/* Social login */}
@@ -134,12 +229,12 @@ export default function LoginForm() {
               <div className="flex-grow h-px bg-gray-200"></div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols- gap-4">
               <Button
                 type="button"
                 variant="outline"
                 className="flex items-center justify-center gap-2"
-                onClick={() => console.log("Google login")}
+                onClick={handleSubmitWithGoogle}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -167,15 +262,6 @@ export default function LoginForm() {
                   </g>
                 </svg>
                 Google
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex items-center justify-center gap-2"
-                onClick={() => console.log("Apple login")}
-              >
-                <Apple className="h-4 w-4" />
-                Apple
               </Button>
             </div>
           </div>

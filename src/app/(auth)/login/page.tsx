@@ -5,14 +5,81 @@ import type React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Mail, Lock, Apple } from "lucide-react"
+import { Mail, Lock, Apple, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { Label } from "@/components/ui/label"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { loginUser } from "@/actions/auth/auth"
+import { toast } from "sonner"
+import { ZodError } from "zod"
 
 export default function LoginForm() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const supabase = createClient()
+
+  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("")
+
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmitWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "http://localhost:3000/auth/callback",
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      })
+
+      if (error) {
+        console.log(error)
+        return
+      }
+
+      return
+    } catch (error) {
+      console.log(error)
+
+      return
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle login logic here
+    setIsLoading(true)
+
+    try {
+      const values = {
+        email,
+        password,
+      }
+
+      const response = await loginUser({ values })
+
+      if (typeof response?.message === "string" && response?.status !== 200) {
+        setIsLoading(false)
+        toast.error(response.message)
+        return
+      }
+
+      setIsLoading(false)
+      toast.success("Inicio de sesión exitoso")
+
+      return router.push("/dashboard")
+    } catch (error) {
+      setIsLoading(false)
+      if (error instanceof ZodError) {
+        error.errors.forEach((err) => {
+          toast.error(err.message)
+        })
+      }
+    }
   }
 
   return (
@@ -45,8 +112,9 @@ export default function LoginForm() {
                 <Input
                   id="email"
                   type="email"
-                  name="email"
                   className="pl-10"
+                  onChange={(e) => setEmail(e.target.value)}
+                  value={email}
                   required
                 />
               </div>
@@ -67,7 +135,8 @@ export default function LoginForm() {
                 <Input
                   id="password"
                   type="password"
-                  name="password"
+                  onChange={(e) => setPassword(e.target.value)}
+                  value={password}
                   className="pl-10"
                   required
                 />
@@ -80,7 +149,11 @@ export default function LoginForm() {
             type="submit"
             className="w-full bg-black hover:bg-black/90 text-white"
           >
-            INGRESAR
+            {isLoading ? (
+              <Loader2 className="size-5 animate-spin text-white" />
+            ) : (
+              "INGRESAR"
+            )}
           </Button>
 
           {/* Forgot password */}
@@ -101,12 +174,12 @@ export default function LoginForm() {
               <div className="flex-grow h-px bg-gray-200"></div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <Button
                 type="button"
                 variant="outline"
                 className="flex items-center justify-center gap-2"
-                onClick={() => console.log("Google login")}
+                onClick={handleSubmitWithGoogle}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -134,15 +207,6 @@ export default function LoginForm() {
                   </g>
                 </svg>
                 Google
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex items-center justify-center gap-2"
-                onClick={() => console.log("Apple login")}
-              >
-                <Apple className="h-4 w-4" />
-                Apple
               </Button>
             </div>
           </div>

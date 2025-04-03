@@ -3,6 +3,8 @@ import "./globals.css"
 import { Open_Sans } from "next/font/google"
 import Navbar from "@/components/navbar/Navbar"
 import Footer from "@/components/footer/Footer"
+import { CartProvider } from "@/context/CartContext"
+import { Toaster } from "sonner"
 
 export const metadata: Metadata = {
   title: "Lozach",
@@ -22,9 +24,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${open_sans.className} antialiased`}>
-        <Navbar />
-        {children}
-        <Footer />
+        <CartProvider>
+          <Toaster richColors duration={4000} position="top-right" />
+          <Navbar />
+          {children}
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   )

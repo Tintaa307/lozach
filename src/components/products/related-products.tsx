@@ -9,7 +9,7 @@ interface RelatedProductsProps {
 export default function RelatedProducts({ products }: RelatedProductsProps) {
   return (
     <div>
-      <h2 className="text-xl font-semibold uppercase mb-6">
+      <h2 className="text-xl font-semibold uppercase mb-6 mt-28">
         OTRAS PRENDAS RELACIONADAS{" "}
         <span className="text-black font-light">PARA COMBINAR</span>
       </h2>
@@ -23,7 +23,7 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
           >
             <div className="bg-gray-100 aspect-square relative mb-2">
               <Image
-                src={product.images[0] || "/placeholder.svg"}
+                src={product.image || "/placeholder.svg"}
                 alt={product.name}
                 fill
                 className="object-cover"

@@ -13,14 +13,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useCart } from "@/context/CartContext"
+import { toast } from "sonner"
 
 interface ProductDetailProps {
   product: Product
 }
 
 export default function ProductDetail({ product }: ProductDetailProps) {
-  const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
+  const [selectedSize, setSelectedSize] = useState("")
+  const [selectedColor, setSelectedColor] = useState("")
+
+  const { addItem } = useCart()
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
@@ -33,38 +38,15 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[80vh]">
-      {/* Product Images */}
-      <div className="space-y-4 flex gap-2 flex-row-reverse h-[70vh]">
-        {/* Main Image */}
-        <div className="bg-gray-100 aspect-square relative">
-          <Image
-            src={product.images[selectedImage] || "/placeholder.svg"}
-            alt={product.name}
-            fill
-            className="object-cover"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6">
-          {product.images.map((image, index) => (
-            <div
-              key={index}
-              className={`bg-gray-100 aspect-square relative -mt-4 ${
-                selectedImage === index ? "ring-2 ring-black/20" : ""
-              }`}
-              onClick={() => setSelectedImage(index)}
-            >
-              <Image
-                src={image || "/placeholder.svg"}
-                alt={`${product.name} thumbnail ${index + 1}`}
-                width={100}
-                height={100}
-                className="object-cover"
-              />
-            </div>
-          ))}
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[80vh]">
+      {/* Product Image */}
+      <div className="bg-gray-100 aspect-square relative h-[90vh]">
+        <Image
+          src={product.image || "/example-image.jpg"}
+          alt={product.name}
+          fill
+          className="object-cover"
+        />
       </div>
 
       {/* Product Info */}
@@ -89,14 +71,44 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <Label htmlFor="size" className="text-sm font-medium">
             Talle
           </Label>
-          <Select>
-            <SelectTrigger className="h-11">
+          <Select
+            onValueChange={(value) => setSelectedSize(value)}
+            defaultValue={product.size.talles[0]}
+            value={selectedSize}
+          >
+            <SelectTrigger className="h-11 cursor-pointer">
               <SelectValue placeholder="Seleccionar talle..." />
             </SelectTrigger>
             <SelectContent id="size">
-              {product.sizes.map((size) => (
-                <SelectItem className="cursor-pointer" key={size} value={size}>
-                  {size}
+              {product.size.talles.map((talle) => (
+                <SelectItem
+                  className="cursor-pointer"
+                  key={talle}
+                  value={talle}
+                >
+                  {talle}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="color" className="text-sm font-medium">
+            Color
+          </Label>
+          <Select
+            onValueChange={(value) => setSelectedColor(value)}
+            defaultValue={product.color[0]}
+            value={selectedColor}
+          >
+            <SelectTrigger className="h-11 cursor-pointer">
+              <SelectValue placeholder="Seleccionar color..." />
+            </SelectTrigger>
+            <SelectContent id="size">
+              {product.color.map((c) => (
+                <SelectItem className="cursor-pointer" key={c} value={c}>
+                  {c}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -109,43 +121,17 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <p className="text-sm text-gray-600">{product.description}</p>
         </div>
 
-        {/* Characteristics */}
+        {/* Fabric */}
         <div className="space-y-2">
-          <h2 className="text-sm font-medium uppercase">Características</h2>
-          <ul className="text-sm text-gray-600 space-y-1">
-            {product.characteristics.map((item, index) => (
-              <li key={index} className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <h2 className="text-sm font-medium">Material</h2>
+          <p className="text-sm text-gray-600">{product.fabric}</p>
         </div>
 
-        {/* Care */}
+        {/* Stock */}
         <div className="space-y-2">
-          <h2 className="text-sm font-medium uppercase">Cuidados</h2>
-          <ul className="text-sm text-gray-600 space-y-1">
-            {product.care.map((item, index) => (
-              <li key={index} className="flex items-start">
-                <span className="mr-2">•</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <h2 className="text-sm font-medium">Stock</h2>
+          <p className="text-sm text-gray-600">{product.stock}</p>
         </div>
-
-        {/* Discount */}
-        {product.discount && (
-          <div className="border border-gray-300 rounded p-3">
-            <p className="text-sm">
-              <span className="font-medium">
-                {product.discount.percentage}% OFF
-              </span>{" "}
-              {product.discount.method}
-            </p>
-          </div>
-        )}
 
         {/* Quantity and Add to Cart */}
         <div className="space-y-4">
@@ -170,7 +156,26 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             </div>
           </div>
 
-          <Button className="w-full bg-black hover:bg-black/90 text-white h-11">
+          <Button
+            onClick={() => {
+              if (!selectedSize || !selectedColor) {
+                return toast.warning(
+                  "Por favor, selecciona un talle y un color."
+                )
+              }
+
+              addItem({
+                id: product.id,
+                name: product.name,
+                image: product.image,
+                price: product.price,
+                quantity: quantity,
+                size: selectedSize,
+                color: selectedColor,
+              })
+            }}
+            className="w-full bg-black hover:bg-black/90 text-white h-11"
+          >
             AGREGAR AL CARRITO
           </Button>
         </div>

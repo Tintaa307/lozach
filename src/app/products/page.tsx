@@ -7,10 +7,12 @@ import { ProductCard } from "@/components/products/product-card"
 import { ProductFilters } from "@/components/products/product-filter"
 import { Product } from "@/types/types"
 import { getProducts } from "@/actions/products/products"
+import ProductGridSkeleton from "./loading"
 
 export default function ProductListing() {
   const [activeCategory, setActiveCategory] = useState("VER TODO")
   const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
 
   const handleProducts = async () => {
     try {
@@ -23,6 +25,7 @@ export default function ProductListing() {
       const data = response.data as Product[]
 
       setProducts(data)
+      setFilteredProducts(data)
     } catch (error) {
       console.error("Error fetching products:", error)
       return
@@ -32,6 +35,14 @@ export default function ProductListing() {
   useEffect(() => {
     handleProducts()
   }, [])
+
+  if (!products.length) {
+    return (
+      <main className="min-h-screen bg-white py-28">
+        <ProductGridSkeleton />
+      </main>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white py-28">
@@ -44,7 +55,10 @@ export default function ProductListing() {
           {/* Desktop filters sidebar */}
           <div className="hidden md:block w-64 flex-shrink-0">
             <h2 className="text-lg font-medium mb-6">{activeCategory}</h2>
-            <ProductFilters />
+            <ProductFilters
+              products={products}
+              setProducts={setFilteredProducts}
+            />
           </div>
 
           {/* Product grid */}
@@ -68,7 +82,7 @@ export default function ProductListing() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 gap-y-24">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

@@ -2,12 +2,14 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { Product } from "@/types/types"
+import { Label } from "../ui/label"
 
 interface FilterSectionProps {
   title: string
@@ -42,12 +44,19 @@ function FilterSection({
 
 interface ProductFiltersProps {
   onClose?: () => void
+  products: Product[]
+  setProducts: (products: Product[]) => void
 }
 
-export function ProductFilters({ onClose }: ProductFiltersProps) {
+export function ProductFilters({
+  onClose,
+  products,
+  setProducts,
+}: ProductFiltersProps) {
   const [priceRange, setPriceRange] = useState([0, 30500])
   const [filterSize, setFilterSize] = useState("")
   const [filterColor, setFilterColor] = useState("")
+  const [filterCategory, setFilterCategory] = useState("")
 
   const sizes = ["S", "M", "L", "XL", "XXL"]
 
@@ -56,15 +65,59 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
   const adultSizes = ["28", "30", "32", "34", "36", "38"]
 
   const colors = [
-    { name: "Vacio", value: "transparent" },
-    { name: "Negro", value: "black" },
-    { name: "Blanco", value: "white" },
-    { name: "Gris", value: "gray" },
-    { name: "Azul", value: "blue" },
-    { name: "Rojo", value: "red" },
-    { name: "Verde", value: "green" },
+    { name: "Vacio", value: "transparent", color: "transparent" },
+    { name: "Negro", value: "negro", color: "black" },
+    { name: "Blanco", value: "blanco", color: "" },
+    { name: "Gris", value: "gris", color: "gray" },
+    { name: "Azul", value: "azul", color: "blue" },
+    { name: "Rojo", value: "rojo", color: "red" },
+    { name: "Verde", value: "verde", color: "green" },
+    { name: "Celeste", value: "celeste", color: "#09e0c6" },
+    { name: "Beige", value: "beige", color: "beige" },
+    { name: "Chocolate", value: "chocolate", color: "#663401" },
+    { name: "Tostado", value: "tostado", color: "#cb5916" },
   ]
-  const categories = ["Niños", "Adultos"]
+  const categories = ["Todas", "Niños", "Adultos"]
+
+  useEffect(() => {
+    // Copiamos el array original para ir filtrando
+    let filtered = [...products]
+
+    // 1) Filtrar por categoría (adult/child), asumiendo:
+    //    "Niños" -> product.category === "child"
+    //    "Adultos" -> product.category === "adult"
+    //    "Todas" -> no filtra
+    if (filterCategory !== "Todas") {
+      if (filterCategory === "Niños") {
+        filtered = filtered.filter((p) => p.category === "child")
+      } else if (filterCategory === "Adultos") {
+        filtered = filtered.filter((p) => p.category === "adult")
+      }
+    }
+
+    // 2) Filtrar por color, solo si se seleccionó uno distinto de "transparent"
+    if (filterColor && filterColor !== "transparent") {
+      filtered = filtered.filter((p) => p.color.includes(filterColor))
+    }
+
+    // 3) Filtrar por talle, si se han seleccionado talles
+    //    (ej: ["S", "M"] o ["28", "30"] dependiendo si es adulto o niño)
+    if (filterSize.length > 0) {
+      filtered = filtered.filter((p) =>
+        // Verificamos si al menos uno de los talles del producto
+        // está en el array de talles seleccionados
+        p.size.talles.some((talle) => filterSize.includes(talle.toUpperCase()))
+      )
+    }
+
+    // 4) Filtrar por rango de precio
+    const [minPrice, maxPrice] = priceRange
+    filtered = filtered.filter(
+      (p) => p.price >= minPrice && p.price <= maxPrice
+    )
+
+    setProducts(filtered)
+  }, [products, filterCategory, filterColor, filterSize, priceRange])
 
   return (
     <div className="space-y-1">
@@ -72,13 +125,19 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
         <div className="space-y-3">
           {categories.map((category) => (
             <div key={category} className="flex items-center space-x-2">
-              <Checkbox id={`category-${category}`} />
-              <label
-                htmlFor={`category-${category}`}
+              <Checkbox
+                id={`${category}`}
+                checked={filterCategory === category}
+                onCheckedChange={(checked) =>
+                  setFilterCategory(checked ? category : "")
+                }
+              />
+              <Label
+                htmlFor={`${category}`}
                 className="text-sm font-normal text-zinc-700 cursor-pointer"
               >
                 {category}
-              </label>
+              </Label>
             </div>
           ))}
         </div>
@@ -89,7 +148,7 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
           <Slider
             defaultValue={priceRange}
             min={0}
-            max={300}
+            max={30500}
             step={5}
             onValueChange={(value) => setPriceRange(value as number[])}
           />
@@ -102,6 +161,17 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
 
       <FilterSection title="Talla (adultos)">
         <div className="grid grid-cols-3 gap-2">
+          {/* Botón para quitar el filtro de talle */}
+          <Button
+            variant={"outline"}
+            onClick={() => setFilterSize("")}
+            className={cn(
+              "flex h-8 items-center justify-center rounded-md border border-zinc-200 text-sm cursor-pointer hover:border-zinc-400",
+              filterSize === "" && "bg-black text-white border-none"
+            )}
+          >
+            Todas
+          </Button>
           {sizes.map((size) => (
             <Button
               key={size}
@@ -138,6 +208,17 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
 
       <FilterSection title="Talla (niños)">
         <div className="grid grid-cols-3 gap-2">
+          {/* Botón para quitar el filtro de talle */}
+          <Button
+            variant={"outline"}
+            onClick={() => setFilterSize("")}
+            className={cn(
+              "flex h-8 items-center justify-center rounded-md border border-zinc-200 text-sm cursor-pointer hover:border-zinc-400",
+              filterSize === "" && "bg-black text-white border-none"
+            )}
+          >
+            Todas
+          </Button>
           {childSizes.map((size) => (
             <Button
               key={size}
@@ -168,7 +249,9 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
                     "border-black": filterColor === color.value,
                   }
                 )}
-                style={{ backgroundColor: color.value }}
+                style={{
+                  backgroundColor: color.color,
+                }}
               >
                 {color.value === "transparent" && (
                   <div className="w-full h-[1px] bg-black/40 rotate-45" />

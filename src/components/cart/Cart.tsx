@@ -14,46 +14,16 @@ import {
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  size: string
-  image: string
-}
+import { useCart } from "@/context/CartContext" // Asegúrate de la ruta correcta
+import { useRouter } from "next/navigation"
 
 export function CartSheet() {
   const [isOpen, setIsOpen] = React.useState(false)
-  const [cartItems, setCartItems] = React.useState<CartItem[]>([])
+  const { cartItems, updateQuantity, removeItem, subtotal } = useCart()
+
+  const router = useRouter()
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  )
-
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems(
-      (prev) =>
-        prev
-          .map((item) => {
-            if (item.id === id) {
-              const newQuantity = Math.max(0, item.quantity + change)
-              return newQuantity === 0
-                ? null
-                : { ...item, quantity: newQuantity }
-            }
-            return item
-          })
-          .filter(Boolean) as CartItem[]
-    )
-  }
-
-  const removeItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id))
-  }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -78,7 +48,7 @@ export function CartSheet() {
               <ShoppingCart className="h-8 w-8 text-gray-500" />
             </div>
             <div className="text-center">
-              <h3 className="font-medium mb-1">TU CARRO ESTA VACIO</h3>
+              <h3 className="font-medium mb-1">TU CARRO ESTÁ VACÍO</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Su carrito parece estar vacío. Es hora de mejorar tu estilo con
                 algunas piezas nuevas.
@@ -100,7 +70,7 @@ export function CartSheet() {
                   <div key={item.id} className="flex items-center space-x-4">
                     <div className="relative aspect-square h-16 w-16 min-w-fit overflow-hidden rounded">
                       <Image
-                        src={item.image || "/placeholder.svg"}
+                        src={item.image || "/example-image.jpg"}
                         alt={item.name}
                         fill
                         className="object-cover"
@@ -163,7 +133,15 @@ export function CartSheet() {
                   </span>
                 </div>
               </div>
-              <Button className="w-full">FINALIZAR COMPRA</Button>
+              <Button
+                onClick={() => {
+                  setIsOpen(false)
+                  router.push("/checkout")
+                }}
+                className="w-full"
+              >
+                FINALIZAR COMPRA
+              </Button>
               <Button
                 variant="outline"
                 className="w-full"

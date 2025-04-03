@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { Product } from "@/types/types"
+import { ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface ProductCardProps {
   product: Product
@@ -12,6 +13,8 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+
+  const router = useRouter()
 
   const discount = product.price
     ? Math.round(((product.price - product.price) / product.price) * 100)
@@ -25,10 +28,10 @@ export function ProductCard({ product }: ProductCardProps) {
     >
       <div className="aspect-[3/4] w-full overflow-hidden bg-[#f8f7f2] relative">
         <Image
-          src={product.image || "/placeholder.svg"}
+          src={product.image || "/example-image.jpg"}
           alt={product.name}
           fill
-          className={`h-full w-full object-cover object-center transition-transform duration-300 ${
+          className={`h-full w-full object-cover object-center transition-transform duration-300 rounded-t-md ${
             isHovered ? "scale-105" : "scale-100"
           }`}
         />
@@ -51,8 +54,11 @@ export function ProductCard({ product }: ProductCardProps) {
             isHovered ? "opacity-100" : "opacity-0"
           }`}
         >
-          <Button className="w-full bg-black text-white hover:bg-zinc-800">
-            AÑADIR
+          <Button
+            onClick={() => router.push(`/products/${product.id}`)}
+            className="w-full bg-black text-white hover:bg-zinc-800"
+          >
+            VER DETALLES <ArrowRight className="size-5 ml-" />
           </Button>
         </div>
       </div>

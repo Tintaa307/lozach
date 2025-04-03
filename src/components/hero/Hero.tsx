@@ -35,13 +35,15 @@ export default function Hero() {
             En Lozach, te ofrecemos la mejor selección de ropa y accesorios para
             que puedas lucir siempre a la moda.
           </p>
-          <Button variant={"default"} size={"lg"} className="h-11 py-6 group">
-            Comprar ahora
-            <ArrowRight
-              size={24}
-              className="ml-2 group-hover:translate-x-1 transition-transform duration-150"
-            />
-          </Button>
+          <Link href={"/products"}>
+            <Button variant={"default"} size={"lg"} className="h-11 py-6 group">
+              Comprar ahora
+              <ArrowRight
+                size={24}
+                className="ml-2 group-hover:translate-x-1 transition-transform duration-150"
+              />
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

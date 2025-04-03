@@ -1,6 +1,6 @@
 "use client"
 
-import { type FormEvent, useState } from "react"
+import { type FormEvent, Suspense, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -20,7 +20,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-export default function OtpVerification() {
+const OtpVerificationContent = () => {
   const [otp, setOtp] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isVerified, setIsVerified] = useState(false)
@@ -143,5 +143,13 @@ export default function OtpVerification() {
         </Card>
       )}
     </div>
+  )
+}
+
+export default function OtpVerification() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <OtpVerificationContent />
+    </Suspense>
   )
 }

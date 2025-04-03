@@ -1,99 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/products/product-card"
 import { ProductFilters } from "@/components/products/product-filter"
-
-const products = [
-  {
-    id: 1,
-    name: "Camiseta Oversize Estampada",
-    price: 29.99,
-    image: "/placeholder.svg?height=400&width=300",
-    isNew: true,
-  },
-  {
-    id: 2,
-    name: "Sudadera con Capucha Negra",
-    price: 49.99,
-    originalPrice: 69.99,
-    image: "/placeholder.svg?height=400&width=300",
-    isSale: true,
-  },
-  {
-    id: 3,
-    name: "Pantalón Cargo Beige",
-    price: 59.99,
-    image: "/placeholder.svg?height=400&width=300",
-  },
-  {
-    id: 4,
-    name: "Chaqueta Bomber Vintage",
-    price: 89.99,
-    originalPrice: 119.99,
-    image: "/placeholder.svg?height=400&width=300",
-    isSale: true,
-  },
-  {
-    id: 5,
-    name: "Camiseta Gráfica Urban",
-    price: 24.99,
-    image: "/placeholder.svg?height=400&width=300",
-  },
-  {
-    id: 6,
-    name: "Jeans Slim Fit Desgastados",
-    price: 69.99,
-    image: "/placeholder.svg?height=400&width=300",
-    isNew: true,
-  },
-  {
-    id: 7,
-    name: "Zapatillas Urbanas Blancas",
-    price: 79.99,
-    originalPrice: 99.99,
-    image: "/placeholder.svg?height=400&width=300",
-    isSale: true,
-  },
-  {
-    id: 8,
-    name: "Gorra Snapback Logo",
-    price: 19.99,
-    image: "/placeholder.svg?height=400&width=300",
-  },
-  {
-    id: 9,
-    name: "Sudadera Estampada Oversize",
-    price: 54.99,
-    image: "/placeholder.svg?height=400&width=300",
-    isNew: true,
-  },
-  {
-    id: 10,
-    name: "Chaqueta Denim Premium",
-    price: 79.99,
-    originalPrice: 99.99,
-    image: "/placeholder.svg?height=400&width=300",
-    isSale: true,
-  },
-  {
-    id: 11,
-    name: "Camiseta Manga Larga Básica",
-    price: 34.99,
-    image: "/placeholder.svg?height=400&width=300",
-  },
-  {
-    id: 12,
-    name: "Pantalón Jogger Técnico",
-    price: 49.99,
-    image: "/placeholder.svg?height=400&width=300",
-  },
-]
+import { Product } from "@/types/types"
+import { getProducts } from "@/actions/products/products"
 
 export default function ProductListing() {
   const [activeCategory, setActiveCategory] = useState("VER TODO")
+  const [products, setProducts] = useState<Product[]>([])
+
+  const handleProducts = async () => {
+    try {
+      const response = await getProducts()
+
+      if (response.status !== 200) {
+        return
+      }
+
+      const data = response.data as Product[]
+
+      setProducts(data)
+    } catch (error) {
+      console.error("Error fetching products:", error)
+      return
+    }
+  }
+
+  useEffect(() => {
+    handleProducts()
+  }, [])
 
   return (
     <div className="min-h-screen bg-white py-28">

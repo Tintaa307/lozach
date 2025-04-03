@@ -45,11 +45,16 @@ interface ProductFiltersProps {
 }
 
 export function ProductFilters({ onClose }: ProductFiltersProps) {
-  const [priceRange, setPriceRange] = useState([0, 300])
+  const [priceRange, setPriceRange] = useState([0, 30500])
   const [filterSize, setFilterSize] = useState("")
   const [filterColor, setFilterColor] = useState("")
 
-  const sizes = ["XS", "S", "M", "L", "XL", "XXL"]
+  const sizes = ["S", "M", "L", "XL", "XXL"]
+
+  const childSizes = ["6", "8", "10", "12", "14", "16", "18"]
+
+  const adultSizes = ["28", "30", "32", "34", "36", "38"]
+
   const colors = [
     { name: "Vacio", value: "transparent" },
     { name: "Negro", value: "black" },
@@ -59,14 +64,7 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
     { name: "Rojo", value: "red" },
     { name: "Verde", value: "green" },
   ]
-  const categories = [
-    "Camisetas",
-    "Sudaderas",
-    "Pantalones",
-    "Chaquetas",
-    "Accesorios",
-    "Calzado",
-  ]
+  const categories = ["Niños", "Adultos"]
 
   return (
     <div className="space-y-1">
@@ -96,15 +94,51 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
             onValueChange={(value) => setPriceRange(value as number[])}
           />
           <div className="flex items-center justify-between">
-            <span className="text-sm text-zinc-700">{priceRange[0]}€</span>
-            <span className="text-sm text-zinc-700">{priceRange[1]}€</span>
+            <span className="text-sm text-zinc-700">{priceRange[0]}$</span>
+            <span className="text-sm text-zinc-700">{priceRange[1]}$</span>
           </div>
         </div>
       </FilterSection>
 
-      <FilterSection title="Talla">
+      <FilterSection title="Talla (adultos)">
         <div className="grid grid-cols-3 gap-2">
           {sizes.map((size) => (
+            <Button
+              key={size}
+              variant={"outline"}
+              onClick={() => setFilterSize(size)}
+              className={cn(
+                "flex h-8 items-center justify-center rounded-md border border-zinc-200 text-sm cursor-pointer hover:border-zinc-400",
+                filterSize === size && "bg-black text-white border-none"
+              )}
+            >
+              {size}
+            </Button>
+          ))}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Talla (adultos)">
+        <div className="grid grid-cols-3 gap-2">
+          {adultSizes.map((size) => (
+            <Button
+              key={size}
+              variant={"outline"}
+              onClick={() => setFilterSize(size)}
+              className={cn(
+                "flex h-8 items-center justify-center rounded-md border border-zinc-200 text-sm cursor-pointer hover:border-zinc-400",
+                filterSize === size && "bg-black text-white border-none"
+              )}
+            >
+              {size}
+            </Button>
+          ))}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Talla (niños)">
+        <div className="grid grid-cols-3 gap-2">
+          {childSizes.map((size) => (
             <Button
               key={size}
               variant={"outline"}
@@ -149,29 +183,6 @@ export function ProductFilters({ onClose }: ProductFiltersProps) {
               </span>
             </div>
           ))}
-        </div>
-      </FilterSection>
-
-      <FilterSection title="Ofertas" defaultOpen={false}>
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox id="sale-items" />
-            <label
-              htmlFor="sale-items"
-              className="text-sm font-normal text-zinc-700 cursor-pointer"
-            >
-              Productos en oferta
-            </label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox id="new-arrivals" />
-            <label
-              htmlFor="new-arrivals"
-              className="text-sm font-normal text-zinc-700 cursor-pointer"
-            >
-              Novedades
-            </label>
-          </div>
         </div>
       </FilterSection>
 

@@ -1,14 +1,14 @@
 export interface Product {
-  id: string
+  id: number
   name: string
-  price: number
+  stock: "consultar"
   description: string
-  sizes: string[]
-  characteristics: string[]
-  care: string[]
-  discount?: {
-    percentage: number
-    method: string
+  category: "adult" | "child"
+  color: string[]
+  fabric: string
+  price: number
+  size: {
+    talles: string[]
   }
-  images: string[]
+  image: string
 }

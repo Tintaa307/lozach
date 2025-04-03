@@ -11,14 +11,14 @@ export default function CatagoriesSection() {
   // Main banners
   const mainBanners = [
     {
-      title: "SALE",
-      href: "/sale",
-      image: "/placeholder.svg?height=600&width=500",
+      title: "ADULTOS",
+      href: "/products",
+      image: "/categories/adults.jpg?height=600&width=500",
     },
     {
-      title: "WOMEN",
-      href: "/women",
-      image: "/placeholder.svg?height=600&width=500",
+      title: "NIÑOS",
+      href: "/products",
+      image: "/categories/childs.jpg?height=600&width=500",
     },
   ]
 
@@ -26,22 +26,22 @@ export default function CatagoriesSection() {
   const categoryLinks: CategoryLink[] = [
     {
       title: "CAMISAS",
-      href: "/category/camisas",
+      href: "/products",
       image: "/placeholder.svg?height=400&width=300",
     },
     {
       title: "REMERAS",
-      href: "/category/remeras",
+      href: "/products",
       image: "/placeholder.svg?height=400&width=300",
     },
     {
       title: "BUZOS",
-      href: "/category/buzos",
+      href: "/products",
       image: "/placeholder.svg?height=400&width=300",
     },
     {
       title: "PANTALONES",
-      href: "/category/pantalones",
+      href: "/products",
       image: "/placeholder.svg?height=400&width=300",
     },
   ]
@@ -54,9 +54,10 @@ export default function CatagoriesSection() {
           <Link
             key={index}
             href={banner.href}
-            className="relative overflow-hidden group"
+            className="relative overflow-hidden group z-10"
           >
-            <div className="relative aspect-[5/6] bg-[#c2bcb2]">
+            <div className="absolute w-full h-full bg-black/40 z-20" />
+            <div className="relative aspect-[5/6]">
               <Image
                 src={banner.image || "/placeholder.svg"}
                 alt={banner.title}
@@ -64,7 +65,7 @@ export default function CatagoriesSection() {
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-3xl font-medium tracking-wider">
+                <span className="text-white text-3xl font-medium tracking-wider z-20">
                   {banner.title}
                 </span>
               </div>

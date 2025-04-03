@@ -135,6 +135,15 @@ export default function Navbar() {
           mobileMenuOpen ? "translate-y-0" : "-translate-y-full"
         )}
       >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4 hover:bg-transparent"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <X className="h-6 w-6" />
+        </Button>
+
         <div className="flex flex-col space-y-6">
           <div className="border-b pb-4">
             <h3 className="font-medium mb-3">TIENDA</h3>

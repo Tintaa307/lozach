@@ -32,8 +32,7 @@ export default function Hero() {
             </span>
           </h1>
           <p className="text-base font-medium sm:text-lg md:text-xl text-black mb-6 sm:mb-8 md:mb-10">
-            En Lozach, te ofrecemos la mejor selección de ropa y accesorios para
-            que puedas lucir siempre a la moda.
+            En Lozach, queremos acompañarte, se vive y se siente tu libertad.
           </p>
           <Link href={"/products"}>
             <Button variant={"default"} size={"lg"} className="h-11 py-6 group">

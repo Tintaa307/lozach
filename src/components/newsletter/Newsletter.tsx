@@ -92,9 +92,9 @@ export default function Newsletter() {
           </div>
 
           <div className="flex justify-center md:justify-end">
-            <div className="relative h-64 w-48">
+            <div className="relative h-64 w-52">
               <Image
-                src="/placeholder.svg?height=300&width=200"
+                src="/logo-big.png?height=400&width=400"
                 alt="Decorative figure"
                 fill
                 className="object-contain brightness-200 contrast-125 invert"

@@ -8,19 +8,9 @@ import { v4 as uuidv4 } from "uuid"
 import { useCart } from "@/context/CartContext"
 import { capitalizeFirstLetter } from "@/lib/utils"
 
-interface OrderItem {
-  id: string
-  name: string
-  size: string
-  color: string
-  quantity: number
-  price: number
-  imageUrl: string
-}
-
 export default function OrderConfirmation() {
   const [isLoading, setIsLoading] = useState(false)
-  const { cartItems, clearCart, subtotal } = useCart()
+  const { cartItems, subtotal } = useCart()
 
   // Genera un número de pedido único usando UUID y almacénalo en estado para que no cambie en cada render
   const [orderNumber] = useState(uuidv4())

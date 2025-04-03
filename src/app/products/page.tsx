@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/select"
 
 export default function ProductListing() {
-  const [activeCategory, setActiveCategory] = useState("VER TODO")
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -79,7 +78,7 @@ export default function ProductListing() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-12 md:py-28">
+    <div className="min-h-screen bg-white py-24 md:py-28">
       <h1 className="text-center font-semibold text-3xl md:text-4xl mb-4">
         Todos nuestros <span className="font-light">productos</span>
       </h1>
@@ -89,7 +88,6 @@ export default function ProductListing() {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Desktop filters sidebar */}
           <div className="hidden md:block w-64 flex-shrink-0">
-            <h2 className="text-lg font-medium mb-6">{activeCategory}</h2>
             <ProductFilters
               products={products}
               setProducts={setFilteredProducts}
@@ -100,14 +98,17 @@ export default function ProductListing() {
           <div className="flex-1">
             {/* Mobile header with filter and sort */}
             <div className="md:hidden mb-6">
-              <h2 className="text-xl font-medium mb-4">{activeCategory}</h2>
               <div className="flex justify-between items-center mb-4">
                 <p className="text-sm text-zinc-500">
                   {filteredProducts.length} productos
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm">Ordenar:</span>
-                  <Select defaultValue="ninguno" onValueChange={handleSort}>
+                  <Select
+                    defaultValue="ninguno"
+                    value={sortOption}
+                    onValueChange={handleSort}
+                  >
                     <SelectTrigger className="w-[140px] h-8">
                       <SelectValue placeholder="Ninguno" />
                     </SelectTrigger>
@@ -160,7 +161,11 @@ export default function ProductListing() {
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-sm">Ordenar:</span>
-                <Select defaultValue="ninguno" onValueChange={handleSort}>
+                <Select
+                  defaultValue="ninguno"
+                  value={sortOption}
+                  onValueChange={handleSort}
+                >
                   <SelectTrigger className="w-[140px] h-8 cursor-pointer">
                     <SelectValue placeholder="Ninguno" />
                   </SelectTrigger>

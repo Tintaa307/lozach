@@ -15,11 +15,6 @@ export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
   const router = useRouter()
-
-  const discount = product.price
-    ? Math.round(((product.price - product.price) / product.price) * 100)
-    : 0
-
   return (
     <div
       className="group relative"

@@ -274,7 +274,10 @@ export function ProductFilters({
           <Button variant="outline" className="flex-1" onClick={onClose}>
             Cancelar
           </Button>
-          <Button className="flex-1 bg-black hover:bg-zinc-800 text-white">
+          <Button
+            onClick={onClose}
+            className="flex-1 bg-black hover:bg-zinc-800 text-white"
+          >
             Aplicar filtros
           </Button>
         </div>

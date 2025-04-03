@@ -27,6 +27,7 @@ export const getProducts = async () => {
       data,
     }
   } catch (error) {
+    console.log(error)
     return {
       status: 500,
       message: "Error interno del servidor",
@@ -70,6 +71,7 @@ export const getProductById = async (id: string) => {
       data: data,
     }
   } catch (error) {
+    console.log(error)
     return {
       status: 500,
       message: "Error interno del servidor",

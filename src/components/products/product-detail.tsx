@@ -38,23 +38,28 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[80vh]">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 min-h-[50vh] md:min-h-[60vh] lg:min-h-[70vh]">
       {/* Product Image */}
-      <div className="bg-gray-100 aspect-square relative h-[90vh]">
+      <div className="bg-gray-100 aspect-square relative w-full h-auto max-h-[70vh] md:max-h-[80vh]">
         <Image
           src={product.image || "/example-image.jpg"}
           alt={product.name}
           fill
           className="object-cover"
+          priority
         />
       </div>
 
       {/* Product Info */}
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-xl font-bold uppercase">{product.name}</h1>
-            <p className="text-base font-medium">${product.price.toFixed(2)}</p>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold uppercase">
+              {product.name}
+            </h1>
+            <p className="text-base lg:text-lg font-medium mt-1">
+              ${product.price.toFixed(2)}
+            </p>
           </div>
           <Button
             variant={"ghost"}
@@ -73,14 +78,14 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </Label>
           <Select
             onValueChange={(value) => setSelectedSize(value)}
-            defaultValue={product.size.talles[0]}
+            defaultValue={product.size?.talles?.[0]}
             value={selectedSize}
           >
-            <SelectTrigger className="h-11 cursor-pointer">
+            <SelectTrigger className="h-10 md:h-11 cursor-pointer">
               <SelectValue placeholder="Seleccionar talle..." />
             </SelectTrigger>
             <SelectContent id="size">
-              {product.size.talles.map((talle) => (
+              {product.size?.talles?.map((talle) => (
                 <SelectItem
                   className="cursor-pointer"
                   key={talle}
@@ -99,14 +104,14 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </Label>
           <Select
             onValueChange={(value) => setSelectedColor(value)}
-            defaultValue={product.color[0]}
+            defaultValue={product.color?.[0]}
             value={selectedColor}
           >
-            <SelectTrigger className="h-11 cursor-pointer">
+            <SelectTrigger className="h-10 md:h-11 cursor-pointer">
               <SelectValue placeholder="Seleccionar color..." />
             </SelectTrigger>
-            <SelectContent id="size">
-              {product.color.map((c) => (
+            <SelectContent id="color">
+              {product.color?.map((c) => (
                 <SelectItem className="cursor-pointer" key={c} value={c}>
                   {c}
                 </SelectItem>
@@ -116,39 +121,39 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         </div>
 
         {/* Description */}
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <h2 className="text-sm font-medium">Descripción</h2>
           <p className="text-sm text-gray-600">{product.description}</p>
         </div>
 
         {/* Fabric */}
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <h2 className="text-sm font-medium">Material</h2>
           <p className="text-sm text-gray-600">{product.fabric}</p>
         </div>
 
         {/* Stock */}
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <h2 className="text-sm font-medium">Stock</h2>
           <p className="text-sm text-gray-600">{product.stock}</p>
         </div>
 
         {/* Quantity and Add to Cart */}
-        <div className="space-y-4">
+        <div className="space-y-4 pt-2 md:pt-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Cantidad:</span>
             <div className="flex items-center border border-gray-300 rounded">
               <button
                 onClick={decreaseQuantity}
-                className="px-3 py-1 border-r border-gray-300"
+                className="px-3 py-2 border-r border-gray-300 touch-manipulation"
                 aria-label="Decrease quantity"
               >
                 <Minus className="h-4 w-4" />
               </button>
-              <span className="px-4 py-1">{quantity}</span>
+              <span className="px-4 py-2">{quantity}</span>
               <button
                 onClick={increaseQuantity}
-                className="px-3 py-1 border-l border-gray-300"
+                className="px-3 py-2 border-l border-gray-300 touch-manipulation"
                 aria-label="Increase quantity"
               >
                 <Plus className="h-4 w-4" />
@@ -174,7 +179,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 color: selectedColor,
               })
             }}
-            className="w-full bg-black hover:bg-black/90 text-white h-11"
+            className="w-full bg-black hover:bg-black/90 text-white h-11 md:h-12"
           >
             AGREGAR AL CARRITO
           </Button>

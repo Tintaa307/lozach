@@ -8,13 +8,15 @@ interface RelatedProductsProps {
 
 export default function RelatedProducts({ products }: RelatedProductsProps) {
   return (
-    <div>
-      <h2 className="text-xl font-semibold uppercase mb-6 mt-28">
+    <div className="w-full">
+      <h2 className="text-lg md:text-xl font-semibold uppercase mb-4 md:mb-6 mt-16 md:mt-28">
         OTRAS PRENDAS RELACIONADAS{" "}
-        <span className="text-black font-light">PARA COMBINAR</span>
+        <span className="text-black font-light block sm:inline">
+          PARA COMBINAR
+        </span>
       </h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
         {products.map((product) => (
           <Link
             key={product.id}
@@ -30,8 +32,12 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
               />
             </div>
             <div className="space-y-1">
-              <h3 className="font-medium">{product.name}</h3>
-              <p>${product.price.toFixed(2)}</p>
+              <h3 className="font-medium text-sm sm:text-base">
+                {product.name}
+              </h3>
+              <p className="text-sm sm:text-base">
+                ${product.price.toFixed(2)}
+              </p>
             </div>
           </Link>
         ))}

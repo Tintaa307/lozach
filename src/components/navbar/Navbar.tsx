@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Search, User, ChevronDown, MapPin, MenuIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,11 +9,32 @@ import { cn } from "@/lib/utils"
 import { FilterPanel } from "./filter-panel"
 import Image from "next/image"
 import { CartSheet } from "../cart/Cart"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 export default function Navbar() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState(false)
+
+  const router = useRouter()
+
+  const supabase = createClient()
+
+  const handleUser = async () => {
+    const { user } = (await supabase.auth.getUser()).data
+
+    if (!user) {
+      setUser(false)
+    }
+
+    setUser(true)
+  }
+
+  useEffect(() => {
+    handleUser()
+  }, [supabase])
 
   const handleMouseEnter = (dropdown: string) => {
     setActiveDropdown(dropdown)
@@ -107,14 +128,19 @@ export default function Navbar() {
               </Button>
             </div>
             <Button
+              onClick={() => {
+                if (user) {
+                  router.push("/profile")
+                } else {
+                  router.push("/login")
+                }
+              }}
               variant="ghost"
               size="icon"
-              className="h-auto hover:bg-gray-400/20 flex items-center justify-center"
+              className="h-auto flex items-center justify-center p-[6px] cursor-pointer"
               asChild
             >
-              <Link href="/account" className="p-2">
-                <User className="h-6 w-6 md:h-7 md:w-7" />
-              </Link>
+              <User className="h-6 w-6 md:h-7 md:w-7" />
             </Button>
             <Button
               variant="ghost"

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { useCart } from "@/context/CartContext"
 import { toast } from "sonner"
+import { capitalizeFirstLetter } from "@/lib/utils"
 
 interface ProductDetailProps {
   product: Product
@@ -135,7 +136,9 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         {/* Stock */}
         <div className="space-y-1 md:space-y-2">
           <h2 className="text-sm font-medium">Stock</h2>
-          <p className="text-sm text-gray-600">{product.stock}</p>
+          <p className="text-sm text-gray-600">
+            {capitalizeFirstLetter(product.stock)}
+          </p>
         </div>
 
         {/* Quantity and Add to Cart */}

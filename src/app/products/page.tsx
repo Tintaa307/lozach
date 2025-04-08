@@ -27,7 +27,7 @@ export default function ProductListing() {
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [sortOption, setSortOption] = useState("Relevancia")
+  const [sortOption, setSortOption] = useState("Ninguno")
 
   const handleProducts = async () => {
     try {
@@ -105,11 +105,14 @@ export default function ProductListing() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm">Ordenar:</span>
                   <Select
-                    defaultValue="ninguno"
+                    defaultValue={"Ninguno"}
                     value={sortOption}
                     onValueChange={handleSort}
                   >
-                    <SelectTrigger className="w-[140px] h-8">
+                    <SelectTrigger
+                      defaultValue={"Ninguno"}
+                      className="w-[140px] h-8 text-black"
+                    >
                       <SelectValue placeholder="Ninguno" />
                     </SelectTrigger>
                     <SelectContent>
@@ -162,11 +165,11 @@ export default function ProductListing() {
               <div className="flex items-center gap-2">
                 <span className="text-sm">Ordenar:</span>
                 <Select
-                  defaultValue="ninguno"
+                  defaultValue={"Ninguno"}
                   value={sortOption}
                   onValueChange={handleSort}
                 >
-                  <SelectTrigger className="w-[140px] h-8 cursor-pointer">
+                  <SelectTrigger className="w-[140px] h-8 cursor-pointer text-black">
                     <SelectValue placeholder="Ninguno" />
                   </SelectTrigger>
                   <SelectContent>

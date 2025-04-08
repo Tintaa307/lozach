@@ -10,5 +10,5 @@ export interface Product {
   size: {
     talles: string[]
   }
-  image: string
+  image_url: string
 }

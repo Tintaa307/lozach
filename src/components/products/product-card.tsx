@@ -23,7 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
     >
       <div className="aspect-[3/4] w-full overflow-hidden bg-[#f8f7f2] relative">
         <Image
-          src={product.image || "/example-image.jpg"}
+          src={product.image_url || "/example-image.jpg"}
           alt={product.name}
           fill
           className={`h-full w-full object-cover object-center transition-transform duration-300 rounded-t-md ${

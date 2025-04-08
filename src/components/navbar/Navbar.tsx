@@ -6,17 +6,19 @@ import { Search, User, ChevronDown, MapPin, MenuIcon, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { FilterPanel } from "./filter-panel"
 import Image from "next/image"
 import { CartSheet } from "../cart/Cart"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { SearchResults } from "./search-results"
 
 export default function Navbar() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  //const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [user, setUser] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [showSearchResults, setShowSearchResults] = useState(false)
 
   const router = useRouter()
 
@@ -26,15 +28,33 @@ export default function Navbar() {
     const { user } = (await supabase.auth.getUser()).data
 
     if (!user) {
-      setUser(false)
+      return setUser(false)
     }
 
-    setUser(true)
+    return setUser(true)
   }
 
   useEffect(() => {
     handleUser()
   }, [supabase])
+
+  useEffect(() => {
+    console.log(user)
+  }, [user])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest("input") && !target.closest(".search-results")) {
+        setShowSearchResults(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   const handleMouseEnter = (dropdown: string) => {
     setActiveDropdown(dropdown)
@@ -137,7 +157,7 @@ export default function Navbar() {
               }}
               variant="ghost"
               size="icon"
-              className="h-auto flex items-center justify-center p-[6px] cursor-pointer"
+              className="h-auto flex items-center justify-center p-[6px] cursor-pointer max-md:p-[9px]"
               asChild
             >
               <User className="h-6 w-6 md:h-7 md:w-7" />
@@ -174,13 +194,13 @@ export default function Navbar() {
           <div className="border-b pb-4">
             <h3 className="font-medium mb-3">TIENDA</h3>
             <div className="flex flex-col space-y-4 pl-2">
-              <Link
+              {/* <Link
                 href="/outlet"
                 className="text-sm"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 OUTLET
-              </Link>
+              </Link> */}
               <Link
                 href="/best-sellers"
                 className="text-sm"
@@ -228,18 +248,28 @@ export default function Navbar() {
                   type="text"
                   placeholder="Buscar productos..."
                   className="border-none focus-visible:ring-0 focus-visible:ring-offset-0 pl-0 p-0"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    setShowSearchResults(e.target.value.trim() !== "")
+                  }}
+                  onFocus={() => {
+                    if (searchQuery.trim() !== "") {
+                      setShowSearchResults(true)
+                    }
+                  }}
                 />
               </div>
+              {showSearchResults && (
+                <div className="absolute top-full left-0 right-0 mt-1 z-50 search-results">
+                  <SearchResults
+                    searchQuery={searchQuery}
+                    onClose={() => setShowSearchResults(false)}
+                  />
+                </div>
+              )}
             </div>
           </div>
-
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setIsFilterOpen(true)}
-          >
-            FILTRAR
-          </Button>
         </div>
       </div>
 
@@ -256,49 +286,42 @@ export default function Navbar() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <Button
+            {/* <Button
               variant="link"
               asChild
               className="text-sm font-medium p-0 h-auto"
             >
               <Link href="/outlet">OUTLET</Link>
+            </Button> */}
+            <Button
+              variant="link"
+              asChild
+              className="text-sm font-medium p-0 h-auto"
+            >
+              <Link href="#best-sellers">BEST SELLERS</Link>
             </Button>
             <Button
               variant="link"
               asChild
               className="text-sm font-medium p-0 h-auto"
             >
-              <Link href="/best-sellers">BEST SELLERS</Link>
+              <Link href="#author">RECOMENDACIÓN DE AUTOR</Link>
             </Button>
             <Button
               variant="link"
               asChild
               className="text-sm font-medium p-0 h-auto"
             >
-              <Link href="/recomendacion">RECOMENDACIÓN DE AUTOR</Link>
-            </Button>
-            <Button
-              variant="link"
-              asChild
-              className="text-sm font-medium p-0 h-auto"
-            >
-              <Link href="/ver-todo">VER TODO</Link>
+              <Link href="/products">VER TODO</Link>
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            className="flex items-center text-sm font-medium"
-            onClick={() => setIsFilterOpen(true)}
-          >
-            FILTRAR <ChevronDown className="ml-1 h-4 w-4" />
-          </Button>
         </div>
       </div>
 
       {/* Ubicacion Dropdown - Desktop only */}
       <div
         className={cn(
-          "absolute left-0 right-0 bg-black text-white px-6 py-3 z-50 transform transition-all duration-300 ease-in-out hidden md:block",
+          "absolute left-0 right-0 bg-gray-50 text-black px-6 py-3 z-50 transform transition-all duration-300 ease-in-out hidden md:block",
           activeDropdown === "ubicacion"
             ? "opacity-100 translate-y-0"
             : "opacity-0 -translate-y-2 pointer-events-none"
@@ -311,9 +334,9 @@ export default function Navbar() {
           <span className="font-medium">ARGERICH 562</span>
           <Button
             variant="link"
-            className="ml-2 text-sm text-gray-300 p-0 h-auto"
+            className="ml-2 text-sm text-muted-foreground p-0 h-auto"
           >
-            ver ubicación
+            Ver ubicación
           </Button>
         </div>
       </div>
@@ -329,30 +352,45 @@ export default function Navbar() {
         onMouseEnter={() => handleMouseEnter("search")}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center flex-1">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center flex-1 relative">
             <Search className="h-5 w-5 mr-2 text-gray-500" />
             <Input
               type="text"
               placeholder="Buscar productos..."
-              defaultValue="BUZO"
-              className="border-none focus-visible:ring-0 focus-visible:ring-offset-0 pl-0"
+              className=""
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setShowSearchResults(e.target.value.trim() !== "")
+              }}
+              onFocus={() => {
+                if (searchQuery.trim() !== "") {
+                  setShowSearchResults(true)
+                }
+              }}
             />
+            {showSearchResults && (
+              <div className="absolute top-full left-0 right-0 mt-1 z-50 search-results">
+                <SearchResults
+                  searchQuery={searchQuery}
+                  onClose={() => {
+                    setShowSearchResults(false)
+                    setMobileMenuOpen(false)
+                  }}
+                  isDesktop={true}
+                />
+              </div>
+            )}
           </div>
           <div className="flex items-center">
             <span className="text-sm text-gray-500 mr-4">
               MOSTRANDO X RESULTADOS
             </span>
-            <Button
-              variant="ghost"
-              className="flex items-center text-sm font-medium"
-            >
-              FILTRAR <ChevronDown className="ml-1 h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>
-      <FilterPanel open={isFilterOpen} onOpenChange={setIsFilterOpen} />
+      {/* <FilterPanel open={isFilterOpen} onOpenChange={setIsFilterOpen} /> */}
     </header>
   )
 }

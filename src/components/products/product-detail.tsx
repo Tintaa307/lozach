@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/select"
 import { useCart } from "@/context/CartContext"
 import { toast } from "sonner"
-import { capitalizeFirstLetter } from "@/lib/utils"
+import { capitalizeFirstLetter, cn } from "@/lib/utils"
+import { createFavorite } from "@/actions/favorites/favorites"
 
 interface ProductDetailProps {
   product: Product
@@ -25,6 +26,27 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState("")
   const [selectedColor, setSelectedColor] = useState("")
+
+  const [isFavorite, setIsFavorite] = useState(false)
+
+  const handleFavorite = async (id: number) => {
+    if (!id) return
+
+    try {
+      const response = await createFavorite(id)
+
+      if (response.status !== 200) {
+        toast.warning(response.message)
+        return
+      }
+
+      setIsFavorite(true)
+      return toast.success("Producto agregado a favoritos")
+    } catch (error) {
+      console.error("Error adding to favorites:", error)
+      return toast.error("Error al agregar a favoritos")
+    }
+  }
 
   const { addItem } = useCart()
 
@@ -43,7 +65,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       {/* Product Image */}
       <div className="bg-gray-100 aspect-square relative w-full h-auto max-h-[70vh] md:max-h-[80vh]">
         <Image
-          src={product.image || "/example-image.jpg"}
+          src={product.image_url || "/example-image.jpg"}
           alt={product.name}
           fill
           className="object-cover"
@@ -67,8 +89,13 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             size={"icon"}
             className="p-2"
             aria-label="Add to favorites"
+            onClick={() => handleFavorite(product.id)}
           >
-            <Heart className="h-5 w-5" />
+            <Heart
+              className={cn("h-5 w-5", {
+                "fill-red-500 text-red-500": isFavorite,
+              })}
+            />
           </Button>
         </div>
 
@@ -175,7 +202,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               addItem({
                 id: product.id,
                 name: product.name,
-                image: product.image,
+                image: product.image_url,
                 price: product.price,
                 quantity: quantity,
                 size: selectedSize,

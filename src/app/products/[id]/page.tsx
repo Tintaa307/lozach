@@ -99,7 +99,7 @@ export default function ProductPage({
   }
 
   return (
-    <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 min-h-screen">
+    <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-24 min-h-screen">
       <div className="flex flex-col gap-12 sm:gap-16 md:gap-20">
         <ProductDetail product={product} />
         <RelatedProducts products={relatedProducts.slice(0, 4)} />

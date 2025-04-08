@@ -25,7 +25,7 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
           >
             <div className="bg-gray-100 aspect-square relative mb-2">
               <Image
-                src={product.image || "/placeholder.svg"}
+                src={product.image_url || "/placeholder.svg"}
                 alt={product.name}
                 fill
                 className="object-cover"

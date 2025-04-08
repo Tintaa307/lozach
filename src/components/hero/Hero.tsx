@@ -12,7 +12,7 @@ export default function Hero() {
           src="/hero/hero.jpg"
           alt="Hero background"
           fill
-          className="object-fill object-center"
+          className="object-fill object-center max-md:object-cover"
           priority
         />
         {/* Overlay to darken the image slightly */}

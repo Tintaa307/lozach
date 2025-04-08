@@ -73,7 +73,7 @@ export default function AuthorRecommendations() {
   }
 
   return (
-    <section className="w-full max-w-[1440px] mx-auto px-4 py-8">
+    <section id="author" className="w-full max-w-[1440px] mx-auto px-4 py-8">
       <div className="mb-8">
         <h2 className="text-2xl font-medium">
           <span className="font-bold">RECOMENDACIONES DE AUTOR</span>{" "}

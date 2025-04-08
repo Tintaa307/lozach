@@ -128,7 +128,10 @@ export default function BestSellers() {
   }
 
   return (
-    <section className="w-full max-w-[1440px] mx-auto px-4 py-24">
+    <section
+      id="best-sellers"
+      className="w-full max-w-[1440px] mx-auto px-4 py-24"
+    >
       <div className="mb-2">
         <h2 className="text-2xl font-light">
           <span className="font-bold">BEST SELLERS</span> LO MÁS VENDIDO

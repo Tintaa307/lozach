@@ -383,11 +383,6 @@ export default function Navbar() {
               </div>
             )}
           </div>
-          <div className="flex items-center">
-            <span className="text-sm text-gray-500 mr-4">
-              MOSTRANDO X RESULTADOS
-            </span>
-          </div>
         </div>
       </div>
       {/* <FilterPanel open={isFilterOpen} onOpenChange={setIsFilterOpen} /> */}

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Product } from "@/types/types"
 import { Label } from "../ui/label"
+import { useSearchParams } from "next/navigation"
 
 interface FilterSectionProps {
   title: string
@@ -56,12 +56,13 @@ export function ProductFilters({
   const [priceRange, setPriceRange] = useState([0, 30500])
   const [filterSize, setFilterSize] = useState("")
   const [filterColor, setFilterColor] = useState("")
+
+  // Obtenemos los searchParams y establecemos la categoría inicial
+  const searchParams = useSearchParams()
   const [filterCategory, setFilterCategory] = useState("")
 
   const sizes = ["S", "M", "L", "XL", "XXL"]
-
   const childSizes = ["6", "8", "10", "12", "14", "16", "18"]
-
   const adultSizes = ["28", "30", "32", "34", "36", "38"]
 
   const colors = [
@@ -80,10 +81,17 @@ export function ProductFilters({
   const categories = ["Todas", "Niños", "Adultos"]
 
   useEffect(() => {
-    // Copiamos el array original para ir filtrando
+    const urlCategory = searchParams.get("category")
+    if (urlCategory) {
+      const category = urlCategory === "child" ? "Niños" : "Adultos"
+      setFilterCategory(category)
+    }
+  }, [searchParams, filterCategory])
+
+  useEffect(() => {
     let filtered = [...products]
 
-    // 1) Filtrar por categoría (adult/child), asumiendo:
+    // 1) Filtrar por categoría:
     //    "Niños" -> product.category === "child"
     //    "Adultos" -> product.category === "adult"
     //    "Todas" -> no filtra
@@ -100,12 +108,9 @@ export function ProductFilters({
       filtered = filtered.filter((p) => p.color.includes(filterColor))
     }
 
-    // 3) Filtrar por talle, si se han seleccionado talles
-    //    (ej: ["S", "M"] o ["28", "30"] dependiendo si es adulto o niño)
+    // 3) Filtrar por talle
     if (filterSize.length > 0) {
       filtered = filtered.filter((p) =>
-        // Verificamos si al menos uno de los talles del producto
-        // está en el array de talles seleccionados
         p.size.talles.some((talle) => filterSize.includes(talle.toUpperCase()))
       )
     }
@@ -117,26 +122,33 @@ export function ProductFilters({
     )
 
     setProducts(filtered)
-  }, [products, filterCategory, filterColor, filterSize, priceRange])
+  }, [
+    products,
+    filterCategory,
+    filterColor,
+    filterSize,
+    priceRange,
+    setProducts,
+  ])
 
   return (
     <div className="space-y-1">
       <FilterSection title="Categoría">
         <div className="space-y-3">
-          {categories.map((category) => (
-            <div key={category} className="flex items-center space-x-2">
+          {categories.map((cat) => (
+            <div key={cat} className="flex items-center space-x-2">
               <Checkbox
-                id={`${category}`}
-                checked={filterCategory === category}
+                id={cat}
+                checked={filterCategory === cat}
                 onCheckedChange={(checked) =>
-                  setFilterCategory(checked ? category : "")
+                  setFilterCategory(checked ? cat : "")
                 }
               />
               <Label
-                htmlFor={`${category}`}
+                htmlFor={cat}
                 className="text-sm font-normal text-zinc-700 cursor-pointer"
               >
-                {category}
+                {cat}
               </Label>
             </div>
           ))}
@@ -161,7 +173,6 @@ export function ProductFilters({
 
       <FilterSection title="Talla (adultos)">
         <div className="grid grid-cols-3 gap-2">
-          {/* Botón para quitar el filtro de talle */}
           <Button
             variant={"outline"}
             onClick={() => setFilterSize("")}
@@ -208,7 +219,6 @@ export function ProductFilters({
 
       <FilterSection title="Talla (niños)">
         <div className="grid grid-cols-3 gap-2">
-          {/* Botón para quitar el filtro de talle */}
           <Button
             variant={"outline"}
             onClick={() => setFilterSize("")}

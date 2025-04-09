@@ -232,7 +232,7 @@ export default function Navbar() {
               <span className="text-sm">ARGERICH 562</span>
             </div>
             <Link
-              href="/ubicacion"
+              href="/#footer"
               className="text-sm text-gray-500 pl-8"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -335,12 +335,14 @@ export default function Navbar() {
         <div className="flex items-center justify-center">
           <MapPin className="h-5 w-5 mr-2" />
           <span className="font-medium">ARGERICH 562</span>
-          <Button
-            variant="link"
-            className="ml-2 text-sm text-muted-foreground p-0 h-auto"
-          >
-            Ver ubicación
-          </Button>
+          <Link href={"/#footer"}>
+            <Button
+              variant="link"
+              className="ml-2 text-sm text-muted-foreground p-0 h-auto"
+            >
+              Ver ubicación
+            </Button>
+          </Link>
         </div>
       </div>
 

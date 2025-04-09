@@ -12,12 +12,12 @@ export default function CatagoriesSection() {
   const mainBanners = [
     {
       title: "ADULTOS",
-      href: "/products",
+      href: "/products?category=adult",
       image: "/categories/adults.jpg?height=600&width=500",
     },
     {
       title: "NIÑOS",
-      href: "/products",
+      href: "/products?category=child",
       image: "/categories/childs.jpg?height=600&width=500",
     },
   ]

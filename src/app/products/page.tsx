@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "@/components/products/product-card"
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export default function ProductListing() {
+const ProductListingContent = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -63,6 +63,7 @@ export default function ProductListing() {
         sorted.sort((a, b) => b.price - a.price)
         break
       default:
+        "Ninguno"
         break
     }
 
@@ -253,5 +254,13 @@ export default function ProductListing() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ProductListing() {
+  return (
+    <Suspense fallback={<ProductGridSkeleton />}>
+      <ProductListingContent />
+    </Suspense>
   )
 }

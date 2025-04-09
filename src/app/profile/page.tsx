@@ -26,6 +26,14 @@ export default async function UserProfile() {
     return redirect("/login")
   }
 
+  const username = await (await supabase)
+    .from("users")
+    .select("*")
+    .eq("email", user.email)
+    .single()
+
+  console.log("username", username)
+
   const response = await getFavorites()
 
   const ids = response?.data?.map((item) => item.product_id) || []
@@ -60,7 +68,7 @@ export default async function UserProfile() {
                 </Avatar>
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold">
-                    {user?.user_metadata.full_name || "Nombre Apellido"}
+                    {user?.user_metadata.full_name || username.data?.name}
                   </h2>
                   <p className="text-sm sm:text-base text-muted-foreground">
                     {user?.email || "usuario@ejemplo.com"}

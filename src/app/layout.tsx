@@ -9,7 +9,7 @@ import { Toaster } from "sonner"
 export const metadata: Metadata = {
   title: "Lozach",
   description:
-    "Lozach - Tu estilo dice quién sos. Nosotros vamos con vos. Somos una marca de ropa que acompaña tu libertad.",
+    "Lozach - Tu estilo dice quién sos. Nosotros vamos con vos. Somos una marca de ropa que acompaña tu libertad. Estamos en Avellaneda y Flores, Buenos Aires. Te ofrecemos ropa de mujer, hombre y niños. Comprá online y encontrá las últimas tendencias en moda.",
   keywords: [
     "Lozach",
     "ropa",
@@ -34,6 +34,13 @@ export const metadata: Metadata = {
     "lozach flores",
     "tienda de ropa",
     "tienda de ropa online",
+  ],
+  icons: [
+    {
+      rel: "icon",
+      type: "image/png",
+      url: "/favicon.ico",
+    },
   ],
 }
 

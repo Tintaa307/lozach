@@ -122,7 +122,7 @@ export default function Navbar() {
           </div>
 
           {/* Logo - centered on desktop, left-aligned on mobile */}
-          <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
+          <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 translate-x-4">
             <Link href="/" className="text-2xl font-script">
               <Image
                 src={"/logo-small.png"}
@@ -202,21 +202,21 @@ export default function Navbar() {
                 OUTLET
               </Link> */}
               <Link
-                href="/best-sellers"
+                href="/#best-sellers"
                 className="text-sm"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 BEST SELLERS
               </Link>
               <Link
-                href="/recomendacion"
+                href="/#author"
                 className="text-sm"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 RECOMENDACIÓN DE AUTOR
               </Link>
               <Link
-                href="/ver-todo"
+                href="/products"
                 className="text-sm"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -264,7 +264,10 @@ export default function Navbar() {
                 <div className="absolute top-full left-0 right-0 mt-1 z-50 search-results">
                   <SearchResults
                     searchQuery={searchQuery}
-                    onClose={() => setShowSearchResults(false)}
+                    onClose={() => {
+                      setShowSearchResults(false)
+                      setMobileMenuOpen(false)
+                    }}
                   />
                 </div>
               )}
@@ -298,14 +301,14 @@ export default function Navbar() {
               asChild
               className="text-sm font-medium p-0 h-auto"
             >
-              <Link href="#best-sellers">BEST SELLERS</Link>
+              <Link href="/#best-sellers">BEST SELLERS</Link>
             </Button>
             <Button
               variant="link"
               asChild
               className="text-sm font-medium p-0 h-auto"
             >
-              <Link href="#author">RECOMENDACIÓN DE AUTOR</Link>
+              <Link href="/#author">RECOMENDACIÓN DE AUTOR</Link>
             </Button>
             <Button
               variant="link"

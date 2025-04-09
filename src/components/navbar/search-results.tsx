@@ -87,8 +87,8 @@ export function SearchResults({
             <Link
               href={`/products/${product.id}`}
               key={product.id}
-              className="flex items-center p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
               onClick={onClose}
+              className="flex items-center p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
             >
               <div className="w-[60px] h-[80px] relative flex-shrink-0 bg-gray-100 rounded">
                 <Image

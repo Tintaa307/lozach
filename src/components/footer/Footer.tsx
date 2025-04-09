@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MapPin, Search, User, ShoppingCart, Heart } from "lucide-react"
+import { MapPin, User, Heart, Clock } from "lucide-react"
 import Image from "next/image"
 
 export default function Footer() {
@@ -25,22 +25,17 @@ export default function Footer() {
             <h3 className="font-semibold text-lg mb-4">Explorar</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/outlet" className="hover:underline">
-                  Outlet
-                </Link>
-              </li>
-              <li>
-                <Link href="/bestsellers" className="hover:underline">
+                <Link href="/#best-sellers" className="hover:underline">
                   Bestsellers
                 </Link>
               </li>
               <li>
-                <Link href="/recomendacion-autor" className="hover:underline">
+                <Link href="/#author" className="hover:underline">
                   Recomendación de Autor
                 </Link>
               </li>
               <li>
-                <Link href="/ver-todo" className="hover:underline">
+                <Link href="/products" className="hover:underline">
                   Ver Todo
                 </Link>
               </li>
@@ -53,16 +48,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/buscar"
-                  className="flex items-center hover:underline justify-start"
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  Buscar
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/perfil"
+                  href="/profile"
                   className="flex items-center hover:underline justify-start"
                 >
                   <User className="w-4 h-4 mr-2" />
@@ -74,8 +60,8 @@ export default function Footer() {
                   href="/carrito"
                   className="flex items-center hover:underline justify-start"
                 >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Carrito
+                  <Clock className="w-4 h-4 mr-2" />
+                  Visto recientemete
                 </Link>
               </li>
               <li>
@@ -93,11 +79,20 @@ export default function Footer() {
           {/* Ubicación */}
           <div className="flex flex-col items-start">
             <h3 className="font-semibold text-lg mb-4">Ubicación</h3>
-            <div className="bg-gray-200 w-full max-w-[250px] aspect-video relative flex items-center justify-center mb-3">
-              <MapPin className="w-6 h-6 text-gray-500" />
+            <div className="aspect-w-16 aspect-h-9">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6566.057445050533!2d-58.47669852078514!3d-34.62871444477839!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bcc98d774c1ad1%3A0x14653ade07d7efe4!2sArgerich%20562%2C%20C1407%20Cdad.%20Aut%C3%B3noma%20de%20Buenos%20Aires!5e0!3m2!1ses!2sar!4v1744227626139!5m2!1ses!2sar"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                title="A&S Cleaning Solutions Location"
+              />
             </div>
-            <p className="flex items-center font-medium text-sm">
-              <MapPin className="w-4 h-4 mr-1" /> Argerich 562
+            <p className="flex items-center font-medium text-sm mt-2">
+              <MapPin className="w-4 h-4 mr-2" />
+              Argerich 562
             </p>
           </div>
         </div>

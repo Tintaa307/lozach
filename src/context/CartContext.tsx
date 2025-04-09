@@ -1,5 +1,6 @@
 "use client"
 
+import axios from "axios"
 import React, { createContext, useContext, useState, ReactNode } from "react"
 
 export interface CartItem {
@@ -26,7 +27,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
-  const addItem = (newItem: CartItem) => {
+  const addItem = async (newItem: CartItem) => {
     setCartItems((prevItems) => {
       // Verifica si ya existe el producto con el mismo id y talle
       const existingIndex = prevItems.findIndex(
@@ -42,6 +43,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return [...prevItems, newItem]
       }
     })
+
+    try {
+      const response = await axios.post("/api/last-cart", {
+        product_id: newItem.id,
+      })
+
+      if (response.status !== 200) {
+        console.error("Error al agregar al carrito:", response.data)
+      }
+    } catch (error) {
+      console.error("Error al agregar al carrito:", error)
+    }
   }
 
   const removeItem = (id: number) => {

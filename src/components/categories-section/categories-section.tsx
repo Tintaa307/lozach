@@ -27,22 +27,22 @@ export default function CatagoriesSection() {
     {
       title: "CAMISAS",
       href: "/products",
-      image: "/placeholder.svg?height=400&width=300",
+      image: "/categories/camisas.jpg?height=400&width=300",
     },
     {
       title: "REMERAS",
       href: "/products",
-      image: "/placeholder.svg?height=400&width=300",
+      image: "/categories/remeras.jpg?height=400&width=300",
     },
     {
       title: "BUZOS",
       href: "/products",
-      image: "/placeholder.svg?height=400&width=300",
+      image: "/categories/buzos.jpg?height=400&width=300",
     },
     {
       title: "PANTALONES",
       href: "/products",
-      image: "/placeholder.svg?height=400&width=300",
+      image: "/categories/pantalones.jpg?height=400&width=300",
     },
   ]
 
@@ -82,6 +82,7 @@ export default function CatagoriesSection() {
             href={category.href}
             className="relative overflow-hidden group"
           >
+            <div className="absolute w-full h-full bg-black/40 z-20" />
             <div className="relative aspect-square bg-[#c2bcb2]">
               <Image
                 src={category.image || "/placeholder.svg"}
@@ -90,7 +91,7 @@ export default function CatagoriesSection() {
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-xl font-medium tracking-wider">
+                <span className="text-white text-xl font-medium tracking-wider z-20">
                   {category.title}
                 </span>
               </div>

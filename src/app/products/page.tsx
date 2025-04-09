@@ -216,7 +216,7 @@ export default function ProductListing() {
             )}
 
             {/* Pagination */}
-            {filteredProducts.length > 0 && (
+            {/* {filteredProducts.length > 0 && (
               <div className="mt-12 flex justify-center">
                 <nav className="flex items-center gap-1">
                   <Button variant="outline" size="icon" className="h-8 w-8">
@@ -248,7 +248,7 @@ export default function ProductListing() {
                   </Button>
                 </nav>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>

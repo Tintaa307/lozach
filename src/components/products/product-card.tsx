@@ -26,7 +26,8 @@ export function ProductCard({ product }: ProductCardProps) {
           src={product.image_url || "/example-image.jpg"}
           alt={product.name}
           fill
-          className={`h-full w-full object-cover object-center transition-transform duration-300 rounded-t-md ${
+          onClick={() => router.push(`/products/${product.id}`)}
+          className={`h-full w-full object-cover object-center transition-transform duration-300 rounded-t-md cursor-pointer ${
             isHovered ? "scale-105" : "scale-100"
           }`}
         />
@@ -45,7 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Quick actions */}
         <div
-          className={`absolute inset-x-0 bottom-0 flex justify-center p-2 transition-opacity duration-200 ${
+          className={`absolute inset-x-0 bottom-0 flex justify-center p-2 transition-opacity duration-200 max-md:hidden ${
             isHovered ? "opacity-100" : "opacity-0"
           }`}
         >

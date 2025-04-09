@@ -198,7 +198,7 @@ interface ArticleItemProps {
   product?: Product
 }
 
-function ArticleItem({ name, type, product }: ArticleItemProps) {
+function ArticleItem({ name, type }: ArticleItemProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md my-2">
       <div className="flex items-center justify-between p-3 sm:p-4">

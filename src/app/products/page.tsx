@@ -63,7 +63,6 @@ const ProductListingContent = () => {
         sorted.sort((a, b) => b.price - a.price)
         break
       default:
-        "Ninguno"
         break
     }
 

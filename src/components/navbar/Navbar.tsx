@@ -157,7 +157,7 @@ export default function Navbar() {
               }}
               variant="ghost"
               size="icon"
-              className="h-auto flex items-center justify-center p-[6px] cursor-pointer max-md:p-[9px]"
+              className="h-auto flex items-center justify-center p-[6px] cursor-pointer max-md:p-[9px] max-sm:p-[10px]"
               asChild
             >
               <User className="h-6 w-6 md:h-7 md:w-7" />

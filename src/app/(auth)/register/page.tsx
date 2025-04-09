@@ -66,16 +66,14 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      const formData = new FormData(e.currentTarget as HTMLFormElement)
-
       if (validatePasswords() === false) {
         return toast.error("Las contraseñas no coinciden")
       }
 
       const values = {
-        name: formData.get("name") as string,
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
+        name: name,
+        email: email,
+        password: password,
       }
 
       const response = await createUser({ values })

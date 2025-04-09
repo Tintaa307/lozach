@@ -15,12 +15,16 @@ import { getProductsByIdArray } from "@/actions/products/products"
 import { getLastCartArticles } from "@/actions/last-cart-articles/last-cart-articles"
 import { Button } from "@/components/ui/button"
 import { Product } from "@/types/types"
-import ShoppingCartButton from "./ShoppingCartButton"
+import { redirect } from "next/navigation"
 
 export default async function UserProfile() {
   const supabase = createClient()
 
   const { user } = (await (await supabase).auth.getUser()).data
+
+  if (!user) {
+    return redirect("/login")
+  }
 
   const response = await getFavorites()
 

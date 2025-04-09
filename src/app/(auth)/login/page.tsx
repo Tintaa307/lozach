@@ -71,7 +71,7 @@ export default function LoginForm() {
       setIsLoading(false)
       toast.success("Inicio de sesión exitoso")
 
-      return router.push("/dashboard")
+      return router.push("/")
     } catch (error) {
       setIsLoading(false)
       if (error instanceof ZodError) {

@@ -78,3 +78,46 @@ export const getProductById = async (id: string) => {
     }
   }
 }
+
+export const getProductsByIdArray = async (ids: number[]) => {
+  const supabase = createClient()
+
+  try {
+    if (!ids || ids.length === 0) {
+      return {
+        status: 400,
+        message: "ID de producto no proporcionado",
+      }
+    }
+
+    const { data, error } = await (await supabase)
+      .from("products")
+      .select("name, id")
+      .in("id", ids)
+
+    if (error) {
+      return {
+        status: 500,
+        message: error.message,
+      }
+    }
+
+    if (!data || data.length === 0) {
+      return {
+        status: 404,
+        message: "Producto no encontrado",
+      }
+    }
+
+    return {
+      status: 200,
+      data: data,
+    }
+  } catch (error) {
+    console.log(error)
+    return {
+      status: 500,
+      message: "Error interno del servidor",
+    }
+  }
+}

@@ -7,6 +7,7 @@ import { getProductById, getProducts } from "@/actions/products/products"
 import { useEffect, useState } from "react"
 import { Product } from "@/types/types"
 import ProductSkeleton from "./loading"
+import axios from "axios"
 
 export default function ProductPage({
   params,
@@ -69,6 +70,20 @@ export default function ProductPage({
       return
     }
   }
+
+  useEffect(() => {
+    if (product?.id) {
+      const updateRecentView = async () => {
+        try {
+          await axios.post("/api/recent-view", { product_id: product.id })
+        } catch (error) {
+          console.error("Error al actualizar la vista reciente:", error)
+        }
+      }
+
+      updateRecentView()
+    }
+  }, [product])
 
   useEffect(() => {
     if (productId) {

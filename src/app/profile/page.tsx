@@ -1,6 +1,5 @@
-import { LogOut, Clock, Heart, User, ShoppingCart } from "lucide-react"
+import { Clock, Heart, User, ShoppingCart } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +10,8 @@ import {
   getProductsByFavorites,
 } from "@/actions/favorites/favorites"
 import Link from "next/link"
+import { getLastViewArticles } from "@/actions/last-view-articles/last-view-articles"
+import { getProductsByIdArray } from "@/actions/products/products"
 
 export default async function UserProfile() {
   const supabase = createClient()
@@ -22,6 +23,12 @@ export default async function UserProfile() {
   const ids = response?.data?.map((item) => item.product_id)
 
   const favorites = await getProductsByFavorites(ids as number[])
+
+  const lastViewArticles = await getLastViewArticles()
+
+  const prodcuts_ids = lastViewArticles?.data?.map((item) => item.product_id)
+
+  const lastViewProducts = await getProductsByIdArray(prodcuts_ids as number[])
 
   return (
     <section className="min-h-screen flex items-center justify-center p-4">
@@ -82,13 +89,14 @@ export default async function UserProfile() {
               </TabsList>
               <TabsContent value="recent">
                 <div className="space-y-3">
-                  {[1, 2, 3].map((item) => (
-                    <ArticleItem
-                      key={`recent-${item}`}
-                      name="Nombre Artículo"
-                      type="recent"
-                    />
-                  ))}
+                  {lastViewProducts &&
+                    lastViewProducts.data?.map((item) => (
+                      <ArticleItem
+                        key={`recent-${item.id}`}
+                        name={item.name}
+                        type="recent"
+                      />
+                    ))}
                 </div>
               </TabsContent>
               <TabsContent value="saved">

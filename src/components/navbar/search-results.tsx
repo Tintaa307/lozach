@@ -69,7 +69,7 @@ export function SearchResults({
     >
       <div className="flex items-center justify-between p-3 border-b border-gray-100">
         <p className="text-sm font-medium">
-          {filteredProducts?.length} resultados para "{searchQuery}"
+          {filteredProducts?.length} resultados para {searchQuery}
         </p>
         <Button
           variant="ghost"

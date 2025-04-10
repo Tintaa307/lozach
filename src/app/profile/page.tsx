@@ -32,8 +32,6 @@ export default async function UserProfile() {
     .eq("email", user.email)
     .single()
 
-  console.log("username", username)
-
   const response = await getFavorites()
 
   const ids = response?.data?.map((item) => item.product_id) || []

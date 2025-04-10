@@ -141,7 +141,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <SelectContent id="color">
               {product.color?.map((c) => (
                 <SelectItem className="cursor-pointer" key={c} value={c}>
-                  {c}
+                  {capitalizeFirstLetter(c)}
                 </SelectItem>
               ))}
             </SelectContent>

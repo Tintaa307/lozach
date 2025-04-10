@@ -65,7 +65,15 @@ export function ProductCard({ product }: ProductCardProps) {
         </h3>
         <div className="mt-1 flex items-center">
           <p className="text-sm font-medium text-zinc-900">
-            {product.price.toFixed(2)} $
+            $
+            {product.price.toString().length > 4
+              ? product.price.toFixed(0).toString().slice(0, 2) +
+                "." +
+                product.price
+                  .toFixed(2)
+                  .toString()
+                  .slice(2, product.price.toString().length)
+              : product.price.toFixed(0)}
           </p>
           {/* {product.price && (
             <p className="ml-2 text-sm text-zinc-500 line-through">

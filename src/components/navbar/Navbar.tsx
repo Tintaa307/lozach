@@ -149,11 +149,7 @@ export default function Navbar() {
             </div>
             <Button
               onClick={() => {
-                if (user) {
-                  router.push("/profile")
-                } else {
-                  router.push("/login")
-                }
+                router.push("/profile")
               }}
               variant="ghost"
               size="icon"

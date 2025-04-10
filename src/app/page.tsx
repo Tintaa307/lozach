@@ -10,9 +10,9 @@ export default function Home() {
       <Hero />
       {/* <Features /> */}
       <BestSellers />
-      <AuthorRecommendations />
-      <Newsletter />
       <CatagoriesSection />
+      <Newsletter />
+      <AuthorRecommendations />
     </main>
   )
 }

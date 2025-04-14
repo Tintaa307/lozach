@@ -1,115 +1,60 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { getProductsByNames } from "@/actions/products/products"
 
 interface Product {
   id: number
   name: string
-  price: string
-  imageUrl: string
+  price: number
+  image_url: string
+  category: string
 }
 
 export default function BestSellers() {
   const [currentPage, setCurrentPage] = useState(1)
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Mock product data
-  const products: Product[] = [
-    {
-      id: 1,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 2,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 3,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 4,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 5,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 6,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 7,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 8,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 9,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 10,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 11,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 12,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 13,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 14,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 15,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=200&width=300",
-    },
+  const products_names = [
+    "Buzo canguro frisa estampado",
+    "Cargos jean rectos",
+    "Babucha frisa recta",
+    "Babucha con puño",
+    "Buzo canguro estampado frisa",
+    "Babuchas rusticas",
   ]
+
+  const getProducts = async () => {
+    setIsLoading(true)
+    try {
+      const response = await getProductsByNames(products_names)
+
+      if (response.status !== 200) {
+        console.log(response.message)
+        return
+      }
+
+      if (!response.data) {
+        return
+      }
+
+      setProducts(response.data as Product[])
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    getProducts()
+  }, [])
 
   const productsPerPage = 6
   const totalPages = Math.ceil(products.length / productsPerPage)
@@ -140,25 +85,47 @@ export default function BestSellers() {
 
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-        {visibleProducts.map((product) => (
-          <div key={product.id} className="group">
-            <div className="relative aspect-[3/2] bg-gray-100 mb-2">
-              <Image
-                src={product.imageUrl || "/placeholder.svg"}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
-              <Link href="#" className="absolute inset-0">
-                <span className="sr-only">Ver producto</span>
-              </Link>
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-medium">{product.name}</h3>
-              <p>{product.price}</p>
-            </div>
-          </div>
-        ))}
+        {isLoading
+          ? // Skeleton loader
+            Array.from({ length: productsPerPage }).map((_, index) => (
+              <div key={`skeleton-${index}`} className="animate-pulse">
+                <div className="relative aspect-[3/2] bg-gray-200 mb-2 rounded"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                </div>
+              </div>
+            ))
+          : // Actual products
+            visibleProducts.map((product) => (
+              <div key={product.id} className="group">
+                <div className="relative aspect-[3/2] bg-gray-100 mb-2 overflow-hidden">
+                  <Image
+                    src={product.image_url || "/placeholder.svg"}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <Link href="#" className="absolute inset-0">
+                    <span className="sr-only">Ver producto</span>
+                  </Link>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-medium">{product.name}</h3>
+                  <p>
+                    $
+                    {product.price.toString().length > 4
+                      ? product.price.toFixed(0).toString().slice(0, 2) +
+                        "." +
+                        product.price
+                          .toFixed(2)
+                          .toString()
+                          .slice(2, product.price.toString().length)
+                      : product.price.toFixed(0)}
+                  </p>
+                </div>
+              </div>
+            ))}
       </div>
 
       {/* Pagination */}
@@ -181,6 +148,7 @@ export default function BestSellers() {
                     : "text-gray-500 hover:text-black hover:bg-gray-400/20"
                 )}
                 onClick={() => goToPage(page)}
+                disabled={isLoading}
               >
                 {page}
               </Button>
@@ -192,7 +160,7 @@ export default function BestSellers() {
             size="icon"
             className="p-0 hover:bg-gray-400/20"
             onClick={goToNextPage}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || isLoading}
           >
             <ChevronRight className="h-4 w-4" />
             <span className="sr-only">Next page</span>

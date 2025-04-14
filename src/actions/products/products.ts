@@ -121,3 +121,47 @@ export const getProductsByIdArray = async (ids: number[]) => {
     }
   }
 }
+
+export const getProductsByNames = async (names: string[]) => {
+  const supabase = createClient()
+
+  try {
+    if (!names || names.length === 0) {
+      return {
+        status: 400,
+        message: "Nombres de producto no proporcionados",
+      }
+    }
+
+    const { data, error } = await (await supabase)
+      .from("products")
+      .select("id, name, price, image_url, category")
+      .in("name", names)
+      .limit(6)
+
+    if (error) {
+      return {
+        status: 500,
+        message: error.message,
+      }
+    }
+
+    if (!data || data.length === 0) {
+      return {
+        status: 404,
+        message: "Productos no encontrados",
+      }
+    }
+
+    return {
+      status: 200,
+      data,
+    }
+  } catch (error) {
+    console.log(error)
+    return {
+      status: 500,
+      message: "Error interno del servidor",
+    }
+  }
+}

@@ -28,18 +28,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
 
   const addItem = async (newItem: CartItem) => {
+    // Flag opcional para evitar duplicados
+    let alreadyCalled = false
+
     setCartItems((prevItems) => {
-      // Verifica si ya existe el producto con el mismo id y talle
       const existingIndex = prevItems.findIndex(
         (item) => item.id === newItem.id && item.size === newItem.size
       )
       if (existingIndex >= 0) {
-        // Si ya existe, suma la cantidad
         const updatedItems = [...prevItems]
-        updatedItems[existingIndex].quantity += newItem.quantity
+        // Solo suma si no se ha procesado ya
+        if (!alreadyCalled) {
+          updatedItems[existingIndex].quantity += newItem.quantity
+          alreadyCalled = true
+        }
         return updatedItems
       } else {
-        // Sino, lo agrega al array
         return [...prevItems, newItem]
       }
     })
@@ -48,7 +52,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const response = await axios.post("/api/last-cart", {
         product_id: newItem.id,
       })
-
       if (response.status !== 200) {
         console.error("Error al agregar al carrito:", response.data)
       }

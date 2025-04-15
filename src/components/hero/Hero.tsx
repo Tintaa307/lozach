@@ -32,7 +32,7 @@ export default function Hero() {
             </span>
           </h1>
           <p className="text-base font-medium sm:text-lg md:text-xl text-black mb-6 sm:mb-8 md:mb-10">
-            En Lozach, queremos acompañarte, se vive y se siente tu libertad.
+            En Lozach, queremos acompañarte, se vive tu libertad.
           </p>
           <Link href={"/products"}>
             <Button variant={"default"} size={"lg"} className="h-11 py-6 group">

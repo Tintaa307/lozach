@@ -130,9 +130,11 @@ export default function BestSellers() {
 
       {/* Pagination */}
       <div className="flex justify-center items-center gap-4">
-        <Button variant="default" className="bg-black hover:bg-black/90 h-11">
-          VER TODO
-        </Button>
+        <Link href="/products">
+          <Button variant="default" className="bg-black hover:bg-black/90 h-11">
+            VER TODO
+          </Button>
+        </Link>
 
         <div className="flex items-center gap-2">
           {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(

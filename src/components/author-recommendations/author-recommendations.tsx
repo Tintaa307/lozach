@@ -23,8 +23,8 @@ export default function AuthorRecommendations() {
 
   const products_names = [
     "Camisa lisa de vestir",
-    "Remera m/c estampada clasica",
     "Campera rustica over",
+    "Remera m/c estampada clasica",
   ]
 
   const getProducts = async () => {

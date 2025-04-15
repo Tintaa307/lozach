@@ -1,60 +1,61 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { getProductsByNames } from "@/actions/products/products"
 
 interface Product {
   id: number
   name: string
-  price: string
-  imageUrl: string
+  price: number
+  image_url: string
+  category: string
 }
 
 export default function AuthorRecommendations() {
   const [currentPage, setCurrentPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
 
-  const products: Product[] = [
-    {
-      id: 1,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=400&width=300",
-    },
-    {
-      id: 2,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=400&width=300",
-    },
-    {
-      id: 3,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=400&width=300",
-    },
-    {
-      id: 4,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=400&width=300",
-    },
-    {
-      id: 5,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=400&width=300",
-    },
-    {
-      id: 6,
-      name: "Nombre",
-      price: "$$$",
-      imageUrl: "/placeholder.svg?height=400&width=300",
-    },
+  const products_names = [
+    "Camisa lisa de vestir",
+    "Remera m/c estampada clasica",
+    "Campera rustica over",
   ]
+
+  const getProducts = async () => {
+    setIsLoading(true)
+    try {
+      const response = await getProductsByNames(products_names)
+
+      if (response.status !== 200) {
+        console.log(response.message)
+        return
+      }
+
+      if (!response.data) {
+        return
+      }
+
+      setProducts(response.data as Product[])
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    getProducts()
+  }, [])
+
+  useEffect(() => {
+    console.log("Products:", products)
+  }, [products])
 
   const productsPerPage = 6
   const totalPages = Math.ceil(products.length / productsPerPage)
@@ -91,7 +92,7 @@ export default function AuthorRecommendations() {
           >
             <div className="relative aspect-[3/4] bg-gray-100 mb-2">
               <Image
-                src={product.imageUrl || "/placeholder.svg"}
+                src={product.image_url || "/placeholder.svg"}
                 alt={product.name}
                 fill
                 className="object-cover"
@@ -99,7 +100,17 @@ export default function AuthorRecommendations() {
             </div>
             <div className="space-y-1">
               <h3 className="font-medium">{product.name}</h3>
-              <p>{product.price}</p>
+              <p>
+                $
+                {product.price.toString().length > 4
+                  ? product.price.toFixed(0).toString().slice(0, 2) +
+                    "." +
+                    product.price
+                      .toFixed(2)
+                      .toString()
+                      .slice(2, product.price.toString().length)
+                  : product.price.toFixed(0)}
+              </p>
             </div>
           </Link>
         ))}

@@ -7,6 +7,7 @@ import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { getProductsByNames } from "@/actions/products/products"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Product {
   id: number
@@ -83,38 +84,42 @@ export default function AuthorRecommendations() {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-        {visibleProducts.map((product) => (
-          <Link
-            key={product.id}
-            href={`/products/${product.id}`}
-            className="group"
-          >
-            <div className="relative aspect-[3/4] bg-gray-100 mb-2">
-              <Image
-                src={product.image_url || "/placeholder.svg"}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-medium">{product.name}</h3>
-              <p>
-                $
-                {product.price.toString().length > 4
-                  ? product.price.toFixed(0).toString().slice(0, 2) +
-                    "." +
-                    product.price
-                      .toFixed(2)
-                      .toString()
-                      .slice(2, product.price.toString().length)
-                  : product.price.toFixed(0)}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
+      {isLoading ? (
+        <ProductSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+          {visibleProducts.map((product) => (
+            <Link
+              key={product.id}
+              href={`/products/${product.id}`}
+              className="group"
+            >
+              <div className="relative aspect-[3/4] bg-gray-100 mb-2">
+                <Image
+                  src={product.image_url || "/placeholder.svg"}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-medium">{product.name}</h3>
+                <p>
+                  $
+                  {product.price.toString().length > 4
+                    ? product.price.toFixed(0).toString().slice(0, 2) +
+                      "." +
+                      product.price
+                        .toFixed(2)
+                        .toString()
+                        .slice(2, product.price.toString().length)
+                    : product.price.toFixed(0)}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="flex justify-center items-center gap-4">
@@ -124,9 +129,12 @@ export default function AuthorRecommendations() {
           </Button>
         </Link>
 
-        <div className="flex items-center gap-2">
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(
-            (page) => (
+        {!isLoading && (
+          <div className="flex items-center gap-2">
+            {Array.from(
+              { length: Math.min(totalPages, 5) },
+              (_, i) => i + 1
+            ).map((page) => (
               <Button
                 key={page}
                 variant="ghost"
@@ -141,21 +149,35 @@ export default function AuthorRecommendations() {
               >
                 {page}
               </Button>
-            )
-          )}
+            ))}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="p-0 hover:bg-transparent"
-            onClick={goToNextPage}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-            <span className="sr-only">Next page</span>
-          </Button>
-        </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="p-0 hover:bg-transparent"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Next page</span>
+            </Button>
+          </div>
+        )}
       </div>
     </section>
+  )
+}
+
+function ProductSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="space-y-2">
+          <Skeleton className="aspect-[3/4] w-full" />
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/4" />
+        </div>
+      ))}
+    </div>
   )
 }

@@ -10,3 +10,7 @@ export const UserLoginSchema = UserSchema.pick({
   email: true,
   password: true,
 })
+
+export const NewsletterSubscriptionSchema = z.object({
+  email: z.string().email({ message: "El email no es válido" }),
+})

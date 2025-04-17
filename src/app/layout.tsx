@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar/Navbar"
 import Footer from "@/components/footer/Footer"
 import { CartProvider } from "@/context/CartContext"
 import { Toaster } from "sonner"
+import WhatsappButton from "@/components/whatsapp-button/whatsapp-button"
 
 export const metadata: Metadata = {
   title: "Lozach",
@@ -61,6 +62,7 @@ export default function RootLayout({
           <Toaster richColors duration={4000} position="top-right" />
           <Navbar />
           {children}
+          <WhatsappButton />
           <Footer />
         </CartProvider>
       </body>

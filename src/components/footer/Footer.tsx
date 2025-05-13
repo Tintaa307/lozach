@@ -74,7 +74,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/carrito"
+                  href="/profile"
                   className="flex items-center hover:underline justify-start"
                 >
                   <Clock className="w-4 h-4 mr-2" />
@@ -83,7 +83,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/favoritos"
+                  href="/profile"
                   className="flex items-center hover:underline justify-start"
                 >
                   <Heart className="w-4 h-4 mr-2" />

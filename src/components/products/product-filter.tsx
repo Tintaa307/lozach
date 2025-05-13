@@ -86,7 +86,7 @@ export function ProductFilters({
       const category = urlCategory === "child" ? "Niños" : "Adultos"
       setFilterCategory(category)
     }
-  }, [searchParams, filterCategory])
+  }, [searchParams])
 
   useEffect(() => {
     let filtered = [...products]
@@ -120,6 +120,17 @@ export function ProductFilters({
     filtered = filtered.filter(
       (p) => p.price >= minPrice && p.price <= maxPrice
     )
+
+    // Invertir el orden de los productos cuando se aplica cualquier filtro
+    if (
+      filterCategory !== "" ||
+      filterColor !== "" ||
+      filterSize !== "" ||
+      minPrice !== 0 ||
+      maxPrice !== 30500
+    ) {
+      filtered = filtered.reverse()
+    }
 
     setProducts(filtered)
   }, [

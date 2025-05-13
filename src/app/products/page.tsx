@@ -15,19 +15,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 const ProductListingContent = () => {
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [sortOption, setSortOption] = useState("Ninguno")
 
   const handleProducts = async () => {
     try {
@@ -50,24 +42,6 @@ const ProductListingContent = () => {
   useEffect(() => {
     handleProducts()
   }, [])
-
-  const handleSort = (option: string) => {
-    setSortOption(option)
-    const sorted = [...filteredProducts]
-
-    switch (option) {
-      case "Precio: Bajo a alto":
-        sorted.sort((a, b) => a.price - b.price)
-        break
-      case "Precio: Alto a bajo":
-        sorted.sort((a, b) => b.price - a.price)
-        break
-      default:
-        break
-    }
-
-    setFilteredProducts(sorted)
-  }
 
   if (!products.length) {
     return (
@@ -102,32 +76,6 @@ const ProductListingContent = () => {
                 <p className="text-sm text-zinc-500">
                   {filteredProducts.length} productos
                 </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">Ordenar:</span>
-                  <Select
-                    defaultValue={"Ninguno"}
-                    value={sortOption}
-                    onValueChange={handleSort}
-                  >
-                    <SelectTrigger
-                      defaultValue={"Ninguno"}
-                      className="w-[140px] h-8 text-black"
-                    >
-                      <SelectValue placeholder="Ninguno" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ninguno" disabled>
-                        Ninguno
-                      </SelectItem>
-                      <SelectItem value="precio-asc">
-                        Precio: Bajo a alto
-                      </SelectItem>
-                      <SelectItem value="precio-desc">
-                        Precio: Alto a bajo
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               {/* Mobile filter button */}
@@ -158,33 +106,10 @@ const ProductListingContent = () => {
             </div>
 
             {/* Desktop sort options */}
-            <div className="hidden md:flex justify-between items-center mb-6">
+            <div className="hidden md:flex justify-start items-center mb-6">
               <p className="text-sm text-zinc-500">
                 {filteredProducts.length} productos
               </p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm">Ordenar:</span>
-                <Select
-                  defaultValue={"Ninguno"}
-                  value={sortOption}
-                  onValueChange={handleSort}
-                >
-                  <SelectTrigger className="w-[140px] h-8 cursor-pointer text-black">
-                    <SelectValue placeholder="Ninguno" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem className="cursor-pointer" value="ninguno">
-                      Ninguno
-                    </SelectItem>
-                    <SelectItem className="cursor-pointer" value="precio-asc">
-                      Precio: Bajo a alto
-                    </SelectItem>
-                    <SelectItem className="cursor-pointer" value="precio-desc">
-                      Precio: Alto a bajo
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             {/* Product grid */}

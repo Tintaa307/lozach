@@ -7,6 +7,7 @@ import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { getProductsByNames } from "@/actions/products/products"
+import { useRouter } from "next/navigation"
 
 interface Product {
   id: number
@@ -20,6 +21,7 @@ export default function BestSellers() {
   const [currentPage, setCurrentPage] = useState(1)
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   const products_names = [
     "Buzo canguro frisa estampado",
@@ -98,7 +100,11 @@ export default function BestSellers() {
             ))
           : // Actual products
             visibleProducts.map((product) => (
-              <div key={product.id} className="group">
+              <div
+                onClick={() => router.push(`/products/${product.id}`)}
+                key={product.id}
+                className="group"
+              >
                 <div className="relative aspect-[3/2] bg-gray-100 mb-2 overflow-hidden">
                   <Image
                     src={product.image_url || "/placeholder.svg"}

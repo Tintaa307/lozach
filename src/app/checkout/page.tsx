@@ -24,7 +24,7 @@ export default function OrderConfirmation() {
   )
 
   // Número de WhatsApp al que se enviará el pedido (puede venir de configuración o contexto)
-  const whatsappNumber = "541160161399" // Reemplazar por el número real
+  const whatsappNumber = "541122791822" // Reemplazar por el número real
 
   // Función para calcular el total del pedido
   const calculateOrderTotal = () => {

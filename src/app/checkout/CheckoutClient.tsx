@@ -22,7 +22,7 @@ import { Address } from "@/types/address/address"
 export default function CheckoutClient({
   address,
 }: {
-  address: Address[] | null
+  address: Address | null
 }) {
   const { cartItems, subtotal } = useCart()
   const router = useRouter()
@@ -31,20 +31,17 @@ export default function CheckoutClient({
   const [metodoEnvio, setMetodoEnvio] = useState("home")
   const [saveInfo, setSaveInfo] = useState(false)
   const [useSavedAddress, setUseSavedAddress] = useState(
-    !!(address && address.length > 0)
+    !!(address ? true : false)
   )
 
-  // Usar la primera dirección guardada si existe, sino valores vacíos
-  const savedAddress = address && address.length > 0 ? address[0] : null
-
   const [formData, setFormData] = useState({
-    identifier: savedAddress?.identifier || "",
-    address: savedAddress?.address || "",
-    details: savedAddress?.details || "",
-    postal_code: savedAddress?.postal_code || "",
-    city: savedAddress?.city || "",
-    state: savedAddress?.state || "",
-    phone: savedAddress?.phone || "",
+    identifier: address?.identifier || "",
+    address: address?.address || "",
+    details: address?.details || "",
+    postal_code: address?.postal_code || "",
+    city: address?.city || "",
+    state: address?.state || "",
+    phone: address?.phone || "",
     shipping_method: metodoEnvio as "home" | "express" | "store",
     save_info: saveInfo,
   })
@@ -66,15 +63,15 @@ export default function CheckoutClient({
   }
 
   const handleUseSavedAddress = () => {
-    if (savedAddress) {
+    if (address) {
       setFormData({
-        identifier: savedAddress.identifier,
-        address: savedAddress.address,
-        details: savedAddress.details,
-        postal_code: savedAddress.postal_code,
-        city: savedAddress.city,
-        state: savedAddress.state,
-        phone: savedAddress.phone,
+        identifier: address.identifier,
+        address: address.address,
+        details: address.details,
+        postal_code: address.postal_code,
+        city: address.city,
+        state: address.state,
+        phone: address.phone,
         shipping_method: metodoEnvio as "home" | "express" | "store",
         save_info: saveInfo,
       })
@@ -215,50 +212,106 @@ export default function CheckoutClient({
             {/* Columna Derecha - Formulario */}
             <div className="space-y-6">
               {/* Dirección Guardada */}
-              {savedAddress && (
-                <Card className="border-green-200 bg-green-50">
-                  <CardHeader>
-                    <CardTitle className="text-green-800 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      Dirección Guardada
-                    </CardTitle>
+              {address && (
+                <Card className="border-2 border-gray-200 bg-linear-to-r from-gray-50 to-gray-100 shadow-lg">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-gray-600 rounded-full"></div>
+                      <CardTitle className="text-lg font-semibold text-gray-800">
+                        Dirección Guardada
+                      </CardTitle>
+                      <div className="ml-auto">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+                          ✓ Verificada
+                        </span>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="bg-white p-4 rounded-lg border border-green-200">
-                      <div className="space-y-2">
-                        <p className="font-medium text-gray-900">
-                          {savedAddress.identifier}
-                        </p>
-                        <p className="text-gray-700">{savedAddress.address}</p>
-                        {savedAddress.details && (
-                          <p className="text-gray-600">
-                            {savedAddress.details}
-                          </p>
-                        )}
-                        <p className="text-gray-600">
-                          {savedAddress.city}, {savedAddress.state} -{" "}
-                          {savedAddress.postal_code}
-                        </p>
-                        <p className="text-gray-600">{savedAddress.phone}</p>
+                    <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                DNI/CUIT
+                              </span>
+                              <span className="font-semibold text-gray-900 text-sm">
+                                {address.identifier}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-gray-800 font-medium text-sm">
+                                {address.address}
+                              </p>
+                              {address.details && (
+                                <p className="text-gray-600 text-xs">
+                                  {address.details}
+                                </p>
+                              )}
+                              <p className="text-gray-600 text-xs">
+                                {address.city}, {address.state} -{" "}
+                                {address.postal_code}
+                              </p>
+                              <p className="text-gray-600 text-xs">
+                                {address.phone}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-4 h-4 text-gray-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Button
                         type="button"
                         onClick={handleUseSavedAddress}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        className={`flex-1 h-10 ${
+                          useSavedAddress
+                            ? "bg-gray-900 hover:bg-gray-800 text-white"
+                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
                         disabled={useSavedAddress}
                       >
-                        {useSavedAddress
-                          ? "✓ Usando esta dirección"
-                          : "Usar esta dirección"}
+                        {useSavedAddress ? (
+                          <>
+                            <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center mr-2">
+                              <div className="w-2 h-2 bg-gray-900 rounded-full"></div>
+                            </div>
+                            Usando esta dirección
+                          </>
+                        ) : (
+                          "Usar esta dirección"
+                        )}
                       </Button>
                       <Button
                         type="button"
                         onClick={handleUseNewAddress}
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 h-10 border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         Usar dirección diferente
                       </Button>
@@ -272,7 +325,7 @@ export default function CheckoutClient({
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Información de Entrega</span>
-                    {savedAddress && (
+                    {address && (
                       <span className="text-sm text-gray-500">
                         {useSavedAddress
                           ? "Usando dirección guardada"

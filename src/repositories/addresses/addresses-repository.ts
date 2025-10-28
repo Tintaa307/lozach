@@ -22,7 +22,7 @@ export class AddressesRepository {
     return
   }
 
-  async getAddress(userId: string): Promise<Address[]> {
+  async getAddress(userId: string): Promise<Address> {
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -45,6 +45,6 @@ export class AddressesRepository {
       )
     }
 
-    return data as Address[]
+    return data as Address
   }
 }

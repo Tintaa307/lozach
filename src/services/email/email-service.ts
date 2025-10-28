@@ -15,7 +15,7 @@ export class EmailService {
 
     const { error } = await this.resend.emails.send({
       from: "Lozach <compras@lozachurban.store>",
-      to: email,
+      to: email, // lozacharg@gmail.com
       subject: "¡Tu compra en Lozach ha sido realizada con éxito!",
       react: OrderConfirmationEmail({
         name,

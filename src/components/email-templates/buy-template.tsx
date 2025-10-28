@@ -305,11 +305,14 @@ export default function OrderConfirmationEmail({
 
             <Row style={socialRow}>
               <Column align="center">
-                <Link href="https://instagram.com/lozach" style={socialLink}>
+                <Link
+                  href="https://instagram.com/lozachurban"
+                  style={socialLink}
+                >
                   Instagram
                 </Link>
                 <Text style={footerSeparator}>•</Text>
-                <Link href="mailto:support@lozach.com" style={socialLink}>
+                <Link href="mailto:lozacharg@gmail.com" style={socialLink}>
                   Soporte por Email
                 </Link>
               </Column>

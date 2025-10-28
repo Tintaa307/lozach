@@ -133,6 +133,17 @@ export class PaymentService {
       order_items.push(productDetails)
     }
 
+    // Agregar item de envío si hay costo
+    if (shippingCostNumber > 0) {
+      items.push({
+        id: `shipping-${Date.now()}`,
+        title: `Envío - ${shipping_method}`,
+        quantity: 1,
+        unit_price: shippingCostNumber,
+        currency_id: "ARS",
+      })
+    }
+
     const request_id = `${user.id}-${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 15)}`
@@ -164,7 +175,7 @@ export class PaymentService {
       const order = await orderService.createOrder({
         user_id: user.id,
         total_amount: totalAmount + shippingCostNumber,
-        subtotal: totalAmount - shippingCostNumber,
+        subtotal: totalAmount,
         payment_id: result.id,
         payment_type: "mercadopago",
         collection_id: result.id,

@@ -9,5 +9,7 @@ export default async function OrderConfirmation() {
     redirect("/login")
   }
 
+  // TODO: Traer la dirección del usuario si es que tiene una guardada
+
   return <CheckoutClient />
 }

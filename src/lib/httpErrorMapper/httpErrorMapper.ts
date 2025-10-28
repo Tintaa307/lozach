@@ -1,9 +1,9 @@
 import {
   ForbiddenException,
-  InvalidInputException,
+  ValidationException,
   NotFoundException,
   UnauthorizedException,
-  DatabaseException,
+  InternalServerException,
 } from "@/exceptions/base/base-exceptions"
 import {
   StorageException,
@@ -26,7 +26,7 @@ export function getHttpStatusCode(error: unknown): number {
   ) {
     return 404
   } else if (
-    error instanceof InvalidInputException ||
+    error instanceof ValidationException ||
     error instanceof InvalidFileTypeException ||
     error instanceof FileSizeExceededException
   ) {
@@ -36,7 +36,7 @@ export function getHttpStatusCode(error: unknown): number {
   } else if (error instanceof ForbiddenException) {
     return 403
   } else if (
-    error instanceof DatabaseException ||
+    error instanceof InternalServerException ||
     error instanceof StorageException ||
     error instanceof FileUploadException ||
     error instanceof FileDeleteException

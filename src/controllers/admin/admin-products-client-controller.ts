@@ -27,8 +27,8 @@ export async function createProductClientAction(
     }
 
     return {
-      status: result.status || 500,
-      error: result.error || "Error al crear el producto",
+      status: result.statusCode || 500,
+      error: result.message || "Error al crear el producto",
     }
   } catch (error: unknown) {
     const errorMessage =
@@ -56,8 +56,8 @@ export async function updateProductClientAction(
     }
 
     return {
-      status: result.status || 500,
-      error: result.error || "Error al actualizar el producto",
+      status: result.statusCode || 500,
+      error: result.message || "Error al actualizar el producto",
     }
   } catch (error: unknown) {
     const errorMessage =
@@ -84,8 +84,8 @@ export async function deleteProductClientAction(
     }
 
     return {
-      status: result.status || 500,
-      error: result.error || "Error al eliminar el producto",
+      status: result.statusCode || 500,
+      error: result.message || "Error al eliminar el producto",
     }
   } catch (error: unknown) {
     const errorMessage =

@@ -7,11 +7,8 @@ import {
 } from "@/exceptions/base/base-exceptions"
 import {
   StorageException,
-  FileUploadException,
-  FileDeleteException,
-  FileNotFoundException,
-  InvalidFileTypeException,
-  FileSizeExceededException,
+  ImageUploadException,
+  ImageDeleteException,
 } from "@/exceptions/storage/storage-exceptions"
 
 /**
@@ -20,16 +17,9 @@ import {
  * @returns The corresponding HTTP status code.
  */
 export function getHttpStatusCode(error: unknown): number {
-  if (
-    error instanceof NotFoundException ||
-    error instanceof FileNotFoundException
-  ) {
+  if (error instanceof NotFoundException) {
     return 404
-  } else if (
-    error instanceof ValidationException ||
-    error instanceof InvalidFileTypeException ||
-    error instanceof FileSizeExceededException
-  ) {
+  } else if (error instanceof ValidationException) {
     return 400
   } else if (error instanceof UnauthorizedException) {
     return 401
@@ -38,8 +28,8 @@ export function getHttpStatusCode(error: unknown): number {
   } else if (
     error instanceof InternalServerException ||
     error instanceof StorageException ||
-    error instanceof FileUploadException ||
-    error instanceof FileDeleteException
+    error instanceof ImageUploadException ||
+    error instanceof ImageDeleteException
   ) {
     return 500
   }

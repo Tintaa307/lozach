@@ -46,19 +46,10 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
     try {
       const response = await updateProductClientAction(product.id, formData)
 
-      if (response.success) {
+      if (response.status === 200) {
         toast.success("Producto actualizado exitosamente")
       } else {
-        toast.error(response.message || "Error al actualizar el producto")
-        if (response.fieldErrors) {
-          Object.entries(
-            response.fieldErrors as Record<string, string[]>
-          ).forEach(([field, errors]) => {
-            errors.forEach((error) => {
-              toast.error(`${field}: ${error}`)
-            })
-          })
-        }
+        toast.error(response.error || "Error al actualizar el producto")
       }
     } catch (error) {
       console.error("Error updating product:", error)

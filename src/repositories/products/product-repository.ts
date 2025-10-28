@@ -92,8 +92,6 @@ export class ProductRepository {
         .eq("id", id)
         .single()
 
-      console.log(data)
-
       if (error) {
         throw new ProductNotFoundException(
           error.message,

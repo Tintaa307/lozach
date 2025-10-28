@@ -1,7 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { getAllProductsAction } from "@/controllers/admin/admin-product-crud-controller"
+import { getAllProductsAction } from "@/controllers/admin/admin-products-api-controller"
 import { getUser } from "@/controllers/auth/auth-controller"
 import { redirect } from "next/navigation"
 import { DashboardClient } from "@/components/dashboard/DashboardClient"

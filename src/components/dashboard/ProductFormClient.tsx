@@ -12,8 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { createProductClientAction } from "@/controllers/admin/admin-product-client-controller"
-import { updateProductClientAction } from "@/controllers/admin/admin-product-client-controller"
+import {
+  createProductClientAction,
+  updateProductClientAction,
+} from "@/controllers/admin/admin-products-client-controller"
 import { uploadProductImagesClientAction } from "@/controllers/storage/storage-client-controller"
 import { CreateProductValues } from "@/types/products/types"
 import { toast } from "sonner"

@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { updateProductClientAction } from "@/controllers/admin/admin-product-client-controller"
+import { updateProductClientAction } from "@/controllers/admin/admin-products-client-controller"
 import { Product, UpdateProductValues } from "@/types/products/types"
 import { toast } from "sonner"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"

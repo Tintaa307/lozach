@@ -1,9 +1,13 @@
 import { ProductRepository } from "@/repositories/products/product-repository"
 import { Product } from "@/types/types"
-import { CreateProductValues, ProductFilters } from "@/types/products/types"
+import {
+  CreateProductValues,
+  ProductFilters,
+  UpdateProductValues,
+} from "@/types/products/types"
 
 export class ProductService {
-  private productRepository: ProductRepository
+  private readonly productRepository: ProductRepository
 
   constructor(productRepository?: ProductRepository) {
     this.productRepository = productRepository || new ProductRepository()
@@ -34,7 +38,7 @@ export class ProductService {
 
   async updateProduct(
     id: number,
-    values: Partial<CreateProductValues>,
+    values: UpdateProductValues,
     userId?: string
   ): Promise<Product> {
     return await this.productRepository.updateProduct(id, values, userId)

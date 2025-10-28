@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createProductAction } from "@/controllers/admin/admin-product-crud-controller"
+import { createProductAction } from "@/controllers/admin/admin-products-api-controller"
 import { CreateProductValues } from "@/types/products/types"
 
 export async function POST(request: NextRequest) {

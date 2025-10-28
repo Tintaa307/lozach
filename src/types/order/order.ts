@@ -14,6 +14,7 @@ export interface Order {
   phone: string
   email_sent?: boolean
   processed_at?: string | null
+  expires_at?: string | null
 }
 
 export interface CreateOrderValues {
@@ -27,6 +28,7 @@ export interface CreateOrderValues {
   external_reference: string | null
   currency: string
   phone: string
+  expires_at?: string | null
 }
 
 export interface UpdateOrderValues {
@@ -40,4 +42,6 @@ export interface UpdateOrderValues {
   phone?: string
   email_sent?: boolean
   processed_at?: string | null
+  expires_at?: string | null
+  updated_at?: string | null
 }

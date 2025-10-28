@@ -1,13 +1,23 @@
 import { ProductService } from "@/services/products/product-service"
+import { AuthService } from "@/services/auth/auth-service"
 import {
-  Product,
   CreateProductValues,
   UpdateProductValues,
+  Product,
 } from "@/types/products/types"
 import { ApiResponse } from "@/types/base/types"
-import { createClient } from "@/lib/supabase/server"
 
 const productService = new ProductService()
+const authService = new AuthService()
+
+// Helper function to verify admin role
+async function verifyAdminRole() {
+  const user = await authService.getUser()
+  if (user.role !== "admin") {
+    throw new Error("Solo los administradores pueden realizar esta acción")
+  }
+  return user
+}
 
 export async function getAllProductsAction(): Promise<ApiResponse<Product[]>> {
   try {
@@ -51,18 +61,7 @@ export async function createProductAction(
   values: CreateProductValues
 ): Promise<ApiResponse<Product>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return {
-        status: 401,
-        error: "Usuario no autenticado",
-      }
-    }
-
+    const user = await verifyAdminRole()
     const product = await productService.createProduct(values, user.id)
     return {
       status: 200,
@@ -84,18 +83,7 @@ export async function updateProductAction(
   values: UpdateProductValues
 ): Promise<ApiResponse<Product>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return {
-        status: 401,
-        error: "Usuario no autenticado",
-      }
-    }
-
+    const user = await verifyAdminRole()
     const product = await productService.updateProduct(id, values, user.id)
     return {
       status: 200,
@@ -116,18 +104,7 @@ export async function deleteProductAction(
   id: number
 ): Promise<ApiResponse<undefined>> {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return {
-        status: 401,
-        error: "Usuario no autenticado",
-      }
-    }
-
+    const user = await verifyAdminRole()
     await productService.deleteProduct(id, user.id)
     return {
       status: 200,

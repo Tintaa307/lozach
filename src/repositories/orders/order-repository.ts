@@ -1,5 +1,6 @@
 import {
   OrderCreationException,
+  OrderFetchException,
   OrderNotFoundException,
   OrderUpdateException,
 } from "@/exceptions/orders/orders-exceptions"
@@ -71,5 +72,34 @@ export class OrderRepository {
     }
 
     return
+  }
+
+  async getOrders(userId: string): Promise<Order[]> {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", userId)
+      .in("collection_status", ["approved", "cancelled"])
+      .order("created_at", { ascending: false })
+
+    console.log(error)
+
+    if (error) {
+      throw new OrderFetchException(
+        error.message,
+        "Error al obtener las órdenes"
+      )
+    }
+
+    if (!data || data.length === 0) {
+      throw new OrderNotFoundException(
+        "Órdenes no encontradas",
+        "Órdenes no encontradas"
+      )
+    }
+
+    return data as Order[]
   }
 }

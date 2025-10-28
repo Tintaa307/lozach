@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Trash2 } from "lucide-react"
-import { deleteProductClientAction } from "@/controllers/admin/admin-product-client-controller"
+import { deleteProductClientAction } from "@/controllers/admin/admin-products-client-controller"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import {

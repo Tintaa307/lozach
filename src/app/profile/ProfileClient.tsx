@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Heart, ShoppingCart } from "lucide-react"
+import { Clock, Heart, ListOrdered, ShoppingCart } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -47,7 +47,15 @@ export default function ProfileClient({
                   {user.role === "admin" ? "Administrador" : "Cliente"}
                 </Badge>
               </div>
-              <LogoutButton />
+              <div className="flex items-center gap-2">
+                <Link href="/profile/my-orders">
+                  <Button variant="outline" size="sm">
+                    <ListOrdered className="h-4 w-4" />
+                    Mis Órdenes
+                  </Button>
+                </Link>
+                <LogoutButton />
+              </div>
             </div>
           </CardHeader>
         </Card>

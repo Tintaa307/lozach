@@ -503,38 +503,37 @@ const placeholderText = {
 
 const productDetailsColumn = {
   verticalAlign: "top" as const,
-  display: "table-cell",
-  paddingRight: "16px",
+  paddingRight: "12px",
 }
 
 const productName = {
   fontSize: "16px",
   fontWeight: "600",
   color: "#111111",
-  margin: "0 0 12px 0",
+  margin: "0 0 8px 0",
   lineHeight: "1.3",
 }
 
 const productDetail = {
   fontSize: "14px",
   color: "#6B7280",
-  margin: "0 0 6px 0",
+  margin: "0 0 4px 0",
   lineHeight: "1.4",
 }
 
 const productPriceColumn = {
   verticalAlign: "top" as const,
-  width: "120px",
-  display: "table-cell",
-  textAlign: "right" as const,
+  width: "auto",
+  minWidth: "80px",
+  whiteSpace: "nowrap" as const,
 }
 
 const productPrice = {
   fontSize: "16px",
   fontWeight: "600",
   color: "#111111",
-  margin: "0 0 8px 0",
-  lineHeight: "1.3",
+  margin: "0 0 4px 0",
+  whiteSpace: "nowrap" as const,
 }
 
 const productQuantity = {

@@ -31,4 +31,10 @@ export class OrderService {
   async updateOrder(id: string, order: UpdateOrderValues): Promise<void> {
     return await this.orderRepository.updateOrder(id, order)
   }
+
+  async getOrders(userId: string): Promise<Order[]> {
+    const orders = await this.orderRepository.getOrders(userId)
+
+    return orders as Order[]
+  }
 }

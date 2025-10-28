@@ -23,3 +23,12 @@ export class OrderUpdateException extends BaseException {
     super(message, 500, userMessage)
   }
 }
+
+export class OrderFetchException extends BaseException {
+  constructor(
+    message: string,
+    userMessage: string = "Error al obtener las órdenes"
+  ) {
+    super(message, 500, userMessage)
+  }
+}

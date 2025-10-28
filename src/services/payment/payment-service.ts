@@ -183,6 +183,7 @@ export class PaymentService {
         external_reference: request_id,
         currency: "ARS",
         phone: phone,
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       })
 
       if (save_info) {
@@ -291,6 +292,8 @@ export class PaymentService {
           external_reference: external_reference,
           payment_id: payment_id,
           collection_status: collection_status,
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+          updated_at: new Date().toISOString(),
         })
       }
     }
@@ -349,6 +352,8 @@ export class PaymentService {
         external_reference: external_reference,
         payment_id: payment_id,
         processed_at: new Date().toISOString() as string,
+        expires_at: null,
+        updated_at: new Date().toISOString(),
       })
 
       await shippingService.updateShipping(order.id, {

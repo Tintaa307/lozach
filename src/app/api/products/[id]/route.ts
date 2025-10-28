@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   deleteProductAction,
   updateProductAction,
-} from "@/controllers/admin/admin-product-crud-controller"
+} from "@/controllers/admin/admin-products-api-controller"
 
 export async function PUT(
   request: NextRequest,

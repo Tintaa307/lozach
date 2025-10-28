@@ -136,9 +136,7 @@ export default function OrderConfirmationEmail({
             <Row style={summaryRow}>
               <Column>
                 <Text style={summaryLabel}>Método de Pago</Text>
-                <Text style={summaryValue}>
-                  {order.payment_type || "Pendiente"}
-                </Text>
+                <Text style={summaryValue}>Mercado Pago</Text>
               </Column>
             </Row>
 
@@ -242,7 +240,9 @@ export default function OrderConfirmationEmail({
               </Column>
               <Column>
                 <Text style={shippingLabel}>Proveedor</Text>
-                <Text style={shippingValue}>{shipping.provider}</Text>
+                <Text style={shippingValue}>
+                  {shipping.provider === "CA" ? "Correo Argentino" : "CA"}
+                </Text>
               </Column>
             </Row>
 
@@ -377,6 +377,7 @@ const heroSubheading = {
 
 const content = {
   padding: "32px 24px",
+  textAlign: "center" as const,
 }
 
 const greeting = {
@@ -398,8 +399,9 @@ const card = {
   backgroundColor: "#FFFFFF",
   border: "1px solid #E5E5E5",
   borderRadius: "8px",
-  margin: "0 24px 24px 24px",
+  margin: "0 auto 24px auto",
   padding: "24px",
+  maxWidth: "552px",
 }
 
 const cardHeading = {

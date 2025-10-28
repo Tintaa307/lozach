@@ -80,7 +80,7 @@ export default function CheckoutClient() {
           shipping_cost:
             SHIPPING_COSTS[
               formData.shipping_method as keyof typeof SHIPPING_COSTS
-            ],
+            ].toString(),
         })
       })
 
@@ -189,9 +189,7 @@ export default function CheckoutClient() {
                   </div>
 
                   <div>
-                    <Label htmlFor="details">
-                      Casa, apartamento, etc. (opcional)
-                    </Label>
+                    <Label htmlFor="details">Casa, apartamento, etc.</Label>
                     <Input
                       id="details"
                       value={formData.details}
@@ -222,7 +220,7 @@ export default function CheckoutClient() {
                         onChange={(e) =>
                           handleInputChange("city", e.target.value)
                         }
-                        placeholder="Buenos Aires"
+                        placeholder="CABA"
                       />
                     </div>
                     <div>
@@ -233,7 +231,7 @@ export default function CheckoutClient() {
                         onChange={(e) =>
                           handleInputChange("state", e.target.value)
                         }
-                        placeholder="CABA"
+                        placeholder="Buenos Aires"
                       />
                     </div>
                   </div>

@@ -13,7 +13,7 @@ export interface CreatePreferenceValues {
   state: string
   phone: string
   shipping_method: "home" | "express" | "store"
-  shipping_cost: number
+  shipping_cost: string
   save_info: boolean
 }
 

@@ -69,6 +69,9 @@ export class PaymentService {
 
     const validatedData = CreatePreferenceSchema.safeParse(body)
 
+    const shippingCostNumber =
+      shipping_cost !== "Gratis" ? Number(shipping_cost) : 0
+
     if (!validatedData.success) {
       throw new InvalidPreferenceDataException(
         validatedData.error.message,
@@ -158,8 +161,8 @@ export class PaymentService {
 
       const order = await orderService.createOrder({
         user_id: user.id,
-        total_amount: totalAmount + shipping_cost,
-        subtotal: totalAmount - shipping_cost,
+        total_amount: totalAmount + shippingCostNumber,
+        subtotal: totalAmount - shippingCostNumber,
         payment_id: result.id,
         payment_type: "mercadopago",
         collection_id: result.id,
@@ -215,7 +218,7 @@ export class PaymentService {
         order_id: order.id,
         user_id: user.id,
         shipping_method,
-        shipping_cost,
+        shipping_cost: shippingCostNumber,
         shipping_status: "draft",
         provider: "CA",
       })
@@ -224,6 +227,7 @@ export class PaymentService {
         init_point: result.init_point,
       }
     } catch (error) {
+      console.error(error)
       throw new PaymentCreationException(
         (error as Error).message,
         "Error al crear la preferencia. Por favor intente nuevamente."

@@ -15,6 +15,8 @@ export class OrderItemsRepository {
 
     const { error } = await supabase.from("order_items").insert(orderItem)
 
+    console.error(error)
+
     if (error) {
       throw new OrderItemsCreationException(
         error.message,

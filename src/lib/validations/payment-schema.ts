@@ -33,7 +33,7 @@ export const CreatePreferenceSchema = z.object({
   shipping_method: z.enum(["home", "express", "store"], {
     errorMap: () => ({ message: "El método de envío es requerido" }),
   }),
-  shipping_cost: z.enum(["5463.76", "8200.0", "Gratis"], {
+  shipping_cost: z.enum(["5463", "8200", "Gratis"], {
     errorMap: () => ({ message: "El costo de envío es requerido" }),
   }),
   save_info: z.boolean(),

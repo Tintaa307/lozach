@@ -1,123 +1,47 @@
-"use client"
-
 import { notFound } from "next/navigation"
-import ProductDetail from "@/components/products/product-detail"
-import RelatedProducts from "@/components/products/related-products"
-import { getProductById, getProducts } from "@/actions/products/products"
-import { useEffect, useState } from "react"
-import { Product } from "@/types/types"
-import ProductSkeleton from "./loading"
-import axios from "axios"
+import {
+  getProductById,
+  getProducts,
+} from "@/controllers/products/product-controller"
+import ProductDetailClient from "./ProductDetailClient"
 
-export default function ProductPage({
+export default async function ProductPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  const [productId, setProductId] = useState("")
-  const [product, setProduct] = useState<Product | null>(null)
+  const { id } = await params
 
-  const [otherProducts, setOtherProducts] = useState<Product[]>([])
-
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
-
-  const handleParams = async () => {
-    const { id } = await params
-
-    if (!id) {
-      notFound()
-    }
-
-    return setProductId(id)
+  if (!id) {
+    notFound()
   }
 
-  useEffect(() => {
-    handleParams()
-  }, [])
+  // Get product data
+  const productResult = await getProductById(parseInt(id))
 
-  const handleProduct = async () => {
-    if (!productId) return notFound()
-    try {
-      const response = await getProductById(productId)
-
-      if (response.status !== 200) {
-        console.log(response)
-
-        return
-      }
-
-      return setProduct(response.data as Product)
-    } catch (error) {
-      console.log(error)
-
-      return
-    }
+  if (productResult.status !== 200 || !productResult.data) {
+    notFound()
   }
 
-  const handleProducts = async () => {
-    try {
-      const response = await getProducts()
+  const product = productResult.data
 
-      if (response.status !== 200) {
-        return
-      }
+  // Get all products for related products
+  const productsResult = await getProducts()
+  const allProducts =
+    productsResult.status === 200 ? productsResult.data || [] : []
 
-      const data = response.data as Product[]
-
-      setOtherProducts(data)
-    } catch (error) {
-      console.error("Error fetching products:", error)
-      return
-    }
-  }
-
-  useEffect(() => {
-    if (product?.id) {
-      const updateRecentView = async () => {
-        try {
-          await axios.post("/api/recent-view", { product_id: product.id })
-        } catch (error) {
-          console.error("Error al actualizar la vista reciente:", error)
-        }
-      }
-
-      updateRecentView()
-    }
-  }, [product])
-
-  useEffect(() => {
-    if (productId) {
-      handleProduct()
-    }
-  }, [productId])
-
-  useEffect(() => {
-    handleProducts()
-  }, [])
-
-  useEffect(() => {
-    if (otherProducts.length > 0) {
-      otherProducts.some((item) => {
-        if (item.id !== product?.id) {
-          setRelatedProducts((prev) => [...prev, item])
-        }
-      })
-    }
-  }, [otherProducts])
-
-  if (!product) {
-    return (
-      <main className="w-full mx-auto px-4 py-24 min-h-screen">
-        <ProductSkeleton />
-      </main>
-    )
-  }
+  // Filter related products (same category, different product)
+  const relatedProducts = allProducts
+    .filter((p) => p.id !== product.id && p.category === product.category)
+    .slice(0, 4)
 
   return (
     <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-24 min-h-screen">
       <div className="flex flex-col gap-12 sm:gap-16 md:gap-20">
-        <ProductDetail product={product} />
-        <RelatedProducts products={relatedProducts.slice(0, 4)} />
+        <ProductDetailClient
+          product={product}
+          relatedProducts={relatedProducts}
+        />
       </div>
     </main>
   )

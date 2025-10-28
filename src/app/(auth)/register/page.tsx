@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
-import { createUser } from "@/actions/auth/auth"
+import { createUser } from "@/controllers/auth/auth-controller"
 
 export default function LoginForm() {
   const router = useRouter()
@@ -40,7 +40,7 @@ export default function LoginForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "http://localhost:3000/auth/callback",
+          redirectTo: "https://lozachurban.store/auth/callback",
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -76,18 +76,18 @@ export default function LoginForm() {
         password: password,
       }
 
-      const response = await createUser({ values })
+      const response = await createUser(values)
 
-      if (response?.status !== 200) {
-        if (typeof response?.message === "string") {
-          setIsLoading(false)
-          return toast.error(response.message)
+      if (!response.success) {
+        setIsLoading(false)
+        if (response.fieldErrors) {
+          Object.values(response.fieldErrors)
+            .flat()
+            .forEach((error) => toast.error(error))
+        } else {
+          toast.error(response.message || "Error al crear la cuenta")
         }
-
-        if (response?.message instanceof Array) {
-          setIsLoading(false)
-          return response.message.forEach((error) => toast.error(error.message))
-        }
+        return
       }
 
       setIsLoading(false)

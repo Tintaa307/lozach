@@ -275,7 +275,7 @@ export function ProductFilters({
                 }}
               >
                 {color.value === "transparent" && (
-                  <div className="w-full h-[1px] bg-black/40 rotate-45" />
+                  <div className="w-full h-px bg-black/40 rotate-45" />
                 )}
               </Button>
               <span

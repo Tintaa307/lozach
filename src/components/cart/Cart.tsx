@@ -70,7 +70,7 @@ export function CartSheet() {
                   <div key={item.id} className="flex items-center space-x-4">
                     <div className="relative aspect-square h-16 w-16 min-w-fit overflow-hidden rounded">
                       <Image
-                        src={item.image || "/example-image.jpg"}
+                        src={item.image_url || "/example-image.jpg"}
                         alt={item.name}
                         fill
                         className="object-cover"

@@ -6,14 +6,14 @@ import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { getProductsByNames } from "@/actions/products/products"
+import { getProductsByNamesClientAction } from "@/controllers/products/product-client-controller"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface Product {
   id: number
   name: string
   price: number
-  image_url: string
+  cover_image_url: string
   category: string
 }
 
@@ -31,9 +31,9 @@ export default function AuthorRecommendations() {
   const getProducts = async () => {
     setIsLoading(true)
     try {
-      const response = await getProductsByNames(products_names)
+      const response = await getProductsByNamesClientAction(products_names)
 
-      if (response.status !== 200) {
+      if (!response.success) {
         console.log(response.message)
         return
       }
@@ -94,9 +94,9 @@ export default function AuthorRecommendations() {
               href={`/products/${product.id}`}
               className="group"
             >
-              <div className="relative aspect-[3/4] bg-gray-100 mb-2">
+              <div className="relative aspect-3/4 bg-gray-100 mb-2">
                 <Image
-                  src={product.image_url || "/placeholder.svg"}
+                  src={product.cover_image_url || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -173,7 +173,7 @@ function ProductSkeleton() {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
       {Array.from({ length: 6 }).map((_, index) => (
         <div key={index} className="space-y-2">
-          <Skeleton className="aspect-[3/4] w-full" />
+          <Skeleton className="aspect-3/4 w-full" />
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-1/4" />
         </div>

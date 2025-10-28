@@ -1,8 +1,17 @@
+"use client"
+
 import Link from "next/link"
 import { MapPin, User, Heart, Clock } from "lucide-react"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 
 export default function Footer() {
+  const pathname = usePathname()
+
+  if (pathname.includes("/dashboard")) {
+    return null
+  }
+
   return (
     <footer id="footer" className="border-t border-gray-200">
       <div className="max-w-[1440px] mx-auto px-4 py-8 md:py-12">

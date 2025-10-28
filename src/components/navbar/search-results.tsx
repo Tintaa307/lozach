@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Product } from "@/types/types"
-import { getProducts } from "@/actions/products/products"
+import { getProductsClientAction } from "@/controllers/products/product-client-controller"
 
 interface SearchResultsProps {
   searchQuery: string
@@ -24,13 +24,13 @@ export function SearchResults({
 
   const handleProducts = async () => {
     try {
-      const response = await getProducts()
+      const response = await getProductsClientAction()
 
-      if (response.status !== 200) {
+      if (!response.success) {
         return
       }
 
-      const data = response.data as Product[]
+      const data = response.data || []
 
       setFilteredProducts(data)
       setMockProducts(data)
@@ -90,7 +90,7 @@ export function SearchResults({
               onClick={onClose}
               className="flex items-center p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
             >
-              <div className="w-[60px] h-[80px] relative flex-shrink-0 bg-gray-100 rounded">
+              <div className="w-[60px] h-[80px] relative shrink-0 bg-gray-100 rounded">
                 <Image
                   src={product.image_url || "/example-image.jpg"}
                   alt={product.name}

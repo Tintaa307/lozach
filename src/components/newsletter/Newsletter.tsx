@@ -2,64 +2,19 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useActionState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowRight, Loader2 } from "lucide-react"
 import Image from "next/image"
-import axios from "axios"
-import { NewsletterSubscriptionSchema } from "@/lib/validations/user-schema"
-import { z } from "zod"
+import { FormState } from "@/types/types"
+import { newsletterSubscription } from "@/controllers/newsletter/newsletter-controller"
 
 export default function Newsletter() {
-  const [email, setEmail] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    try {
-      NewsletterSubscriptionSchema.parse({ email })
-
-      const response = await axios.post("/api/emails", { email })
-
-      if (response.status !== 200) {
-        setError("Hubo un error al suscribirse. Por favor intente nuevamente.")
-        return
-      }
-
-      if (!response.data) {
-        setError("Hubo un error al suscribirse. Por favor intente nuevamente.")
-        return
-      }
-
-      setIsSuccess(true)
-      setEmail("")
-      setError(null)
-      setTimeout(() => {
-        setIsSuccess(false)
-      }, 3000)
-
-      return
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        setError(err.errors[0].message)
-        setTimeout(() => {
-          setError(null)
-        }, 3000)
-        return
-      }
-
-      setError("Hubo un error al suscribirse. Por favor intente nuevamente.")
-      console.error("Subscription error:", err)
-      return
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const [currentState, formAction, isPending] = useActionState<
+    FormState,
+    FormData
+  >(newsletterSubscription, {})
 
   return (
     <section className="w-full bg-[#161616] text-white py-16">
@@ -77,22 +32,21 @@ export default function Newsletter() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form action={formAction} className="space-y-4">
               <div className="relative">
                 <Input
                   type="email"
                   placeholder="lozach@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
                   className="h-11"
                 />
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={isSubmitting}
+                  disabled={isPending}
                   className="absolute w-11 right-0 top-0 h-full bg-gray-400/20 hover:bg-transparent"
                 >
-                  {isSubmitting ? (
+                  {isPending ? (
                     <Loader2 className="size-5 animate-spin" />
                   ) : (
                     <ArrowRight className="h-5 w-5" />
@@ -100,12 +54,12 @@ export default function Newsletter() {
                 </Button>
               </div>
 
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+              {currentState.error && (
+                <p className="text-red-400 text-sm">{currentState.error}</p>
+              )}
 
-              {isSuccess && (
-                <p className="text-green-400 text-sm">
-                  ¡Gracias por suscribirte a nuestro newsletter!
-                </p>
+              {currentState.success && (
+                <p className="text-green-400 text-sm">{currentState.message}</p>
               )}
             </form>
           </div>

@@ -6,14 +6,14 @@ import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { getProductsByNames } from "@/actions/products/products"
+import { getProductsByNamesClientAction } from "@/controllers/products/product-client-controller"
 import { useRouter } from "next/navigation"
 
 interface Product {
   id: number
   name: string
   price: number
-  image_url: string
+  cover_image_url: string
   category: string
 }
 
@@ -35,9 +35,9 @@ export default function BestSellers() {
   const getProducts = async () => {
     setIsLoading(true)
     try {
-      const response = await getProductsByNames(products_names)
+      const response = await getProductsByNamesClientAction(products_names)
 
-      if (response.status !== 200) {
+      if (!response.success) {
         console.log(response.message)
         return
       }
@@ -91,7 +91,7 @@ export default function BestSellers() {
           ? // Skeleton loader
             Array.from({ length: productsPerPage }).map((_, index) => (
               <div key={`skeleton-${index}`} className="animate-pulse">
-                <div className="relative aspect-[3/2] bg-gray-200 mb-2 rounded"></div>
+                <div className="relative aspect-3/2 bg-gray-200 mb-2 rounded"></div>
                 <div className="space-y-2">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-4 bg-gray-200 rounded w-1/4"></div>
@@ -105,9 +105,9 @@ export default function BestSellers() {
                 key={product.id}
                 className="group"
               >
-                <div className="relative aspect-[3/2] bg-gray-100 mb-2 overflow-hidden">
+                <div className="relative aspect-3/2 bg-gray-100 mb-2 overflow-hidden">
                   <Image
-                    src={product.image_url || "/placeholder.svg"}
+                    src={product.cover_image_url || "/placeholder.svg"}
                     alt={product.name}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"

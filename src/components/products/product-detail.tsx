@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Heart, Minus, Plus } from "lucide-react"
+import { Heart, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { Product } from "@/types/types"
+import type { Product } from "@/types/products/types"
 import { Label } from "../ui/label"
 import {
   Select,
@@ -16,7 +16,7 @@ import {
 import { useCart } from "@/context/CartContext"
 import { toast } from "sonner"
 import { capitalizeFirstLetter, cn } from "@/lib/utils"
-import { createFavorite } from "@/actions/favorites/favorites"
+import { createFavorite } from "@/controllers/favorites/favorite-controller"
 
 interface ProductDetailProps {
   product: Product
@@ -26,17 +26,43 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState("")
   const [selectedColor, setSelectedColor] = useState("")
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const [isFavorite, setIsFavorite] = useState(false)
+
+  // Crear array de todas las imágenes disponibles
+  const allImages = [
+    ...(product.image_url ? [product.image_url] : []),
+    ...(product.images_urls || []),
+  ].filter(Boolean) // Filtrar valores null/undefined
+
+  // Debug: verificar qué imágenes tenemos
+  console.log("Product images debug:", {
+    image_url: product.image_url,
+    images_urls: product.images_urls,
+    allImages: allImages,
+  })
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === allImages.length - 1 ? 0 : prev + 1
+    )
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? allImages.length - 1 : prev - 1
+    )
+  }
 
   const handleFavorite = async (id: number) => {
     if (!id) return
 
     try {
-      const response = await createFavorite(id)
+      const response = await createFavorite(id, "user-id") // TODO: Get actual user ID
 
-      if (response.status !== 200) {
-        toast.warning(response.message)
+      if (!response.success) {
+        toast.warning(response.message || "Error al agregar a favoritos")
         return
       }
 
@@ -62,15 +88,87 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 min-h-[50vh] md:min-h-[60vh] lg:min-h-[70vh]">
-      {/* Product Image */}
-      <div className="bg-gray-100 aspect-square relative w-full h-auto max-h-[70vh] md:max-h-[80vh]">
-        <Image
-          src={product.image_url || "/example-image.jpg"}
-          alt={product.name}
-          fill
-          className="object-cover"
-          priority
-        />
+      {/* Product Image Carousel */}
+      <div className="space-y-4">
+        {/* Main Image */}
+        <div className="bg-gray-100 aspect-square relative w-full h-auto max-h-[70vh] md:max-h-[80vh] rounded-lg overflow-hidden">
+          {allImages.length > 0 || product.image_url ? (
+            <>
+              <Image
+                src={
+                  allImages.length > 0
+                    ? allImages[currentImageIndex]
+                    : product.image_url || ""
+                }
+                alt={`${product.name} - Imagen ${currentImageIndex + 1}`}
+                fill
+                className="object-cover"
+                priority
+              />
+
+              {/* Navigation arrows - only show if more than 1 image */}
+              {allImages.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 shadow-md"
+                    onClick={prevImage}
+                    aria-label="Imagen anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 shadow-md"
+                    onClick={nextImage}
+                    aria-label="Siguiente imagen"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+
+              {/* Image counter */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                  {currentImageIndex + 1} / {allImages.length}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Sin imágenes disponibles
+            </div>
+          )}
+        </div>
+
+        {/* Thumbnail Navigation */}
+        {allImages.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {allImages.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                className={cn(
+                  "shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-colors",
+                  currentImageIndex === index
+                    ? "border-black"
+                    : "border-gray-200 hover:border-gray-300"
+                )}
+              >
+                <Image
+                  src={image}
+                  alt={`${product.name} - Miniatura ${index + 1}`}
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Product Info */}
@@ -202,7 +300,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               addItem({
                 id: product.id,
                 name: product.name,
-                image: product.image_url,
+                image_url: allImages[0] || product.image_url || "",
                 price: product.price,
                 quantity: quantity,
                 size: selectedSize,

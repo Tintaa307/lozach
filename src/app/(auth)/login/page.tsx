@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { loginUser } from "@/actions/auth/auth"
+import { loginUser } from "@/controllers/auth/auth-controller"
 import { toast } from "sonner"
 import { ZodError } from "zod"
 
@@ -29,7 +29,7 @@ export default function LoginForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "http://localhost:3000/auth/callback",
+          redirectTo: "https://lozachurban.store/auth/callback",
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -60,11 +60,11 @@ export default function LoginForm() {
         password,
       }
 
-      const response = await loginUser({ values })
+      const response = await loginUser(values)
 
-      if (typeof response?.message === "string" && response?.status !== 200) {
+      if (!response.success) {
         setIsLoading(false)
-        toast.error(response.message)
+        toast.error(response.message || "Error al iniciar sesión")
         return
       }
 

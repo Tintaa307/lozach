@@ -465,13 +465,16 @@ const totalValueBold = {
 }
 
 const productRow = {
-  marginBottom: "16px",
+  marginBottom: "20px",
+  display: "table",
+  width: "100%",
 }
 
 const productImageColumn = {
   width: "80px",
   verticalAlign: "top" as const,
   paddingRight: "16px",
+  display: "table-cell",
 }
 
 const productImage = {
@@ -497,37 +500,45 @@ const placeholderText = {
 
 const productDetailsColumn = {
   verticalAlign: "top" as const,
+  display: "table-cell",
+  paddingRight: "16px",
 }
 
 const productName = {
   fontSize: "16px",
   fontWeight: "600",
   color: "#111111",
-  margin: "0 0 8px 0",
+  margin: "0 0 12px 0",
+  lineHeight: "1.3",
 }
 
 const productDetail = {
   fontSize: "14px",
   color: "#6B7280",
-  margin: "0 0 4px 0",
+  margin: "0 0 6px 0",
+  lineHeight: "1.4",
 }
 
 const productPriceColumn = {
   verticalAlign: "top" as const,
   width: "120px",
+  display: "table-cell",
+  textAlign: "right" as const,
 }
 
 const productPrice = {
   fontSize: "16px",
   fontWeight: "600",
   color: "#111111",
-  margin: "0 0 4px 0",
+  margin: "0 0 8px 0",
+  lineHeight: "1.3",
 }
 
 const productQuantity = {
   fontSize: "14px",
   color: "#6B7280",
   margin: "0",
+  lineHeight: "1.4",
 }
 
 const productDivider = {

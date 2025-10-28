@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Product } from "@/types/types"
 import { getProductsClientAction } from "@/controllers/products/product-client-controller"
 
+interface SimpleProduct {
+  id: number
+  name: string
+  price: number
+  cover_image_url: string
+  category: string
+}
+
 interface SearchResultsProps {
   searchQuery: string
   onClose: () => void
@@ -19,8 +27,8 @@ export function SearchResults({
   onClose,
   isDesktop = false,
 }: SearchResultsProps) {
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>()
-  const [mockProducts, setMockProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<SimpleProduct[]>([])
+  const [mockProducts, setMockProducts] = useState<SimpleProduct[]>([])
 
   const handleProducts = async () => {
     try {
@@ -92,7 +100,7 @@ export function SearchResults({
             >
               <div className="w-[60px] h-[80px] relative shrink-0 bg-gray-100 rounded">
                 <Image
-                  src={product.image_url || "/example-image.jpg"}
+                  src={product.cover_image_url || "/example-image.jpg"}
                   alt={product.name}
                   fill
                   className="object-cover"

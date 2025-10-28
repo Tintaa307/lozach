@@ -80,7 +80,11 @@ export default function CheckoutClient() {
           shipping_cost:
             SHIPPING_COSTS[
               formData.shipping_method as keyof typeof SHIPPING_COSTS
-            ].toString(),
+            ] === 0
+              ? "Gratis"
+              : SHIPPING_COSTS[
+                  formData.shipping_method as keyof typeof SHIPPING_COSTS
+                ].toString(),
         })
       })
 

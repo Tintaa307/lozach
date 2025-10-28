@@ -51,7 +51,7 @@ export async function getProductsClientAction(filters?: {
       error instanceof Error ? error.message : "Error al obtener los productos"
     return {
       success: false,
-      data: null,
+      data: undefined,
       message: errorMessage,
     }
   }
@@ -95,7 +95,7 @@ export async function getProductsByNamesClientAction(
       error instanceof Error ? error.message : "Error al obtener los productos"
     return {
       success: false,
-      data: null,
+      data: undefined,
       message: errorMessage,
     }
   }

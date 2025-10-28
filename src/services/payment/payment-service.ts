@@ -133,7 +133,9 @@ export class PaymentService {
       order_items.push(productDetails)
     }
 
-    const request_id = `${user.id}-${Date.now()}`
+    const request_id = `${user.id}-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`
 
     try {
       const result = (await this.client.create({

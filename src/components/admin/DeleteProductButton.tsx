@@ -38,7 +38,7 @@ export default function DeleteProductButton({
 
       if (response.status === 200) {
         toast.success("Producto eliminado exitosamente")
-        router.push("/admin")
+        router.push("/dashboard")
         router.refresh()
       } else {
         toast.error(response.error || "Error al eliminar el producto")

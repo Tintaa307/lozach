@@ -262,6 +262,15 @@ export class PaymentService {
 
     const alreadyApproved = order.collection_status === "approved"
 
+    if (
+      alreadyApproved &&
+      collection_status === "approved" &&
+      order.email_sent &&
+      order.processed_at
+    ) {
+      return
+    }
+
     if (collection_status !== "approved") {
       if (
         order.collection_status !== collection_status ||

@@ -20,7 +20,7 @@ export default function PaymentFailureClient() {
   }, [searchParams])
 
   return (
-    <div className="min-h-screen py-24 bg-gray-50">
+    <div className="min-h-screen py-24 flex items-center justify-center bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="max-w-md mx-auto">
           <Card className="text-center">

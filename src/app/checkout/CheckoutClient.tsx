@@ -33,7 +33,6 @@ export default function CheckoutClient({
   const [useSavedAddress, setUseSavedAddress] = useState(
     !!(address && address.length > 0)
   )
-  const [showAddressForm, setShowAddressForm] = useState(false)
 
   // Usar la primera dirección guardada si existe, sino valores vacíos
   const savedAddress = address && address.length > 0 ? address[0] : null
@@ -71,7 +70,6 @@ export default function CheckoutClient({
         save_info: saveInfo,
       })
       setUseSavedAddress(true)
-      setShowAddressForm(false)
     }
   }
 
@@ -88,7 +86,6 @@ export default function CheckoutClient({
       save_info: saveInfo,
     })
     setUseSavedAddress(false)
-    setShowAddressForm(true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

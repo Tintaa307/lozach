@@ -19,7 +19,8 @@ import { useRouter } from "next/navigation"
 
 export function CartSheet() {
   const [isOpen, setIsOpen] = React.useState(false)
-  const { cartItems, updateQuantity, removeItem, subtotal } = useCart()
+  const { cartItems, updateQuantity, removeItem, subtotal, isInitialized } =
+    useCart()
 
   const router = useRouter()
 
@@ -42,7 +43,12 @@ export function CartSheet() {
           <SheetTitle className="text-xl">TU CARRO</SheetTitle>
           <Separator />
         </SheetHeader>
-        {cartItems.length === 0 ? (
+        {!isInitialized ? (
+          <div className="flex flex-col items-center justify-center space-y-4 flex-1">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+            <p className="text-gray-500">Cargando carrito...</p>
+          </div>
+        ) : cartItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center space-y-4 flex-1">
             <div className="rounded-full bg-gray-100 p-6">
               <ShoppingCart className="h-8 w-8 text-gray-500" />

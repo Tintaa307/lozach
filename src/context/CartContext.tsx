@@ -1,7 +1,13 @@
 "use client"
 
 import axios from "axios"
-import React, { createContext, useContext, useState, ReactNode } from "react"
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react"
 
 export interface CartItem {
   id: number
@@ -16,16 +22,48 @@ export interface CartItem {
 interface CartContextType {
   cartItems: CartItem[]
   addItem: (item: CartItem) => void
-  removeItem: (id: number) => void
+  removeItem: (id: number, size?: string, color?: string) => void
   updateQuantity: (id: number, change: number) => void
   clearCart: () => void
   subtotal: number
+  isInitialized: boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
+const CART_STORAGE_KEY = "lozach-cart"
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Cargar carrito desde localStorage al inicializar
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY)
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart)
+        if (Array.isArray(parsedCart)) {
+          setCartItems(parsedCart)
+        }
+      }
+    } catch (error) {
+      console.error("Error loading cart from localStorage:", error)
+    } finally {
+      setIsInitialized(true)
+    }
+  }, [])
+
+  // Guardar carrito en localStorage cuando cambie
+  useEffect(() => {
+    if (isInitialized) {
+      try {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
+      } catch (error) {
+        console.error("Error saving cart to localStorage:", error)
+      }
+    }
+  }, [cartItems, isInitialized])
 
   const addItem = async (newItem: CartItem) => {
     // Flag opcional para evitar duplicados
@@ -60,8 +98,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const removeItem = (id: number) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id))
+  const removeItem = (id: number, size?: string, color?: string) => {
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => {
+        if (size && color) {
+          // Remover item específico con tamaño y color
+          return !(item.id === id && item.size === size && item.color === color)
+        } else if (size) {
+          // Remover item específico con tamaño
+          return !(item.id === id && item.size === size)
+        } else {
+          // Remover todos los items con ese ID
+          return item.id !== id
+        }
+      })
+    )
   }
 
   const updateQuantity = (id: number, change: number) => {
@@ -81,7 +132,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     )
   }
 
-  const clearCart = () => setCartItems([])
+  const clearCart = () => {
+    setCartItems([])
+    try {
+      localStorage.removeItem(CART_STORAGE_KEY)
+    } catch (error) {
+      console.error("Error clearing cart from localStorage:", error)
+    }
+  }
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -97,6 +155,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         updateQuantity,
         clearCart,
         subtotal,
+        isInitialized,
       }}
     >
       {children}

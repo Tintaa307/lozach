@@ -6,15 +6,22 @@ import Link from "next/link"
 import { CheckCircle, Package, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useCart } from "@/context/CartContext"
 
 export default function PaymentSuccessClient() {
   const searchParams = useSearchParams()
   const [paymentId, setPaymentId] = useState<string | null>(null)
+  const { clearCart } = useCart()
 
   useEffect(() => {
     const id = searchParams.get("payment_id")
     setPaymentId(id)
-  }, [searchParams])
+
+    // Limpiar el carrito cuando el pago sea exitoso
+    if (id) {
+      clearCart()
+    }
+  }, [searchParams, clearCart])
 
   return (
     <div className="min-h-screen py-24 flex items-center justify-center bg-gray-50">

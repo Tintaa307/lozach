@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,6 +48,15 @@ export default function CheckoutClient({
     shipping_method: metodoEnvio as "home" | "express" | "store",
     save_info: saveInfo,
   })
+
+  // Sincroniza método de envío y guardado con el formulario para evitar inconsistencias
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      shipping_method: metodoEnvio as "home" | "express" | "store",
+      save_info: saveInfo,
+    }))
+  }, [metodoEnvio, saveInfo])
 
   const total =
     subtotal + SHIPPING_COSTS[metodoEnvio as keyof typeof SHIPPING_COSTS]

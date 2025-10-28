@@ -1,5 +1,5 @@
 import { AddressesRepository } from "@/repositories/addresses/addresses-repository"
-import { CreateAddressValues } from "@/types/address/address"
+import { Address, CreateAddressValues } from "@/types/address/address"
 
 export class AddressesService {
   private readonly addressesRepository: AddressesRepository
@@ -10,5 +10,9 @@ export class AddressesService {
 
   async createAddress(address: CreateAddressValues): Promise<void> {
     return await this.addressesRepository.createAddress(address)
+  }
+
+  async getAddress(userId: string): Promise<Address[]> {
+    return await this.addressesRepository.getAddress(userId)
   }
 }

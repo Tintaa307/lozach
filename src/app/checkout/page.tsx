@@ -1,6 +1,7 @@
 import { getUser } from "@/controllers/auth/auth-controller"
 import CheckoutClient from "./CheckoutClient"
 import { redirect } from "next/navigation"
+import { getAddress } from "@/controllers/address/address-controller"
 
 export default async function OrderConfirmation() {
   const userResult = await getUser()
@@ -10,6 +11,9 @@ export default async function OrderConfirmation() {
   }
 
   // TODO: Traer la dirección del usuario si es que tiene una guardada
+  const addressResult = await getAddress(userResult.data.id)
 
-  return <CheckoutClient />
+  const address = addressResult.data || null
+
+  return <CheckoutClient address={address} />
 }

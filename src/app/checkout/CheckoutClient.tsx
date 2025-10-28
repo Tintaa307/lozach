@@ -17,23 +17,35 @@ import { actionErrorHandler } from "@/lib/handlers/actionErrorHandler"
 import { createPreference } from "@/controllers/payment/payment-controller"
 import { AppActionException } from "@/types/exceptions"
 import { useRouter } from "next/navigation"
+import { Address } from "@/types/address/address"
 
-export default function CheckoutClient() {
+export default function CheckoutClient({
+  address,
+}: {
+  address: Address[] | null
+}) {
   const { cartItems, subtotal } = useCart()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
   const [metodoEnvio, setMetodoEnvio] = useState("home")
   const [saveInfo, setSaveInfo] = useState(false)
+  const [useSavedAddress, setUseSavedAddress] = useState(
+    !!(address && address.length > 0)
+  )
+  const [showAddressForm, setShowAddressForm] = useState(false)
+
+  // Usar la primera dirección guardada si existe, sino valores vacíos
+  const savedAddress = address && address.length > 0 ? address[0] : null
 
   const [formData, setFormData] = useState({
-    identifier: "",
-    address: "",
-    details: "",
-    postal_code: "",
-    city: "",
-    state: "",
-    phone: "",
+    identifier: savedAddress?.identifier || "",
+    address: savedAddress?.address || "",
+    details: savedAddress?.details || "",
+    postal_code: savedAddress?.postal_code || "",
+    city: savedAddress?.city || "",
+    state: savedAddress?.state || "",
+    phone: savedAddress?.phone || "",
     shipping_method: metodoEnvio as "home" | "express" | "store",
     save_info: saveInfo,
   })
@@ -43,6 +55,40 @@ export default function CheckoutClient() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleUseSavedAddress = () => {
+    if (savedAddress) {
+      setFormData({
+        identifier: savedAddress.identifier,
+        address: savedAddress.address,
+        details: savedAddress.details,
+        postal_code: savedAddress.postal_code,
+        city: savedAddress.city,
+        state: savedAddress.state,
+        phone: savedAddress.phone,
+        shipping_method: metodoEnvio as "home" | "express" | "store",
+        save_info: saveInfo,
+      })
+      setUseSavedAddress(true)
+      setShowAddressForm(false)
+    }
+  }
+
+  const handleUseNewAddress = () => {
+    setFormData({
+      identifier: "",
+      address: "",
+      details: "",
+      postal_code: "",
+      city: "",
+      state: "",
+      phone: "",
+      shipping_method: metodoEnvio as "home" | "express" | "store",
+      save_info: saveInfo,
+    })
+    setUseSavedAddress(false)
+    setShowAddressForm(true)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,10 +208,72 @@ export default function CheckoutClient() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Columna Derecha - Formulario */}
             <div className="space-y-6">
+              {/* Dirección Guardada */}
+              {savedAddress && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="text-green-800 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      Dirección Guardada
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-white p-4 rounded-lg border border-green-200">
+                      <div className="space-y-2">
+                        <p className="font-medium text-gray-900">
+                          {savedAddress.identifier}
+                        </p>
+                        <p className="text-gray-700">{savedAddress.address}</p>
+                        {savedAddress.details && (
+                          <p className="text-gray-600">
+                            {savedAddress.details}
+                          </p>
+                        )}
+                        <p className="text-gray-600">
+                          {savedAddress.city}, {savedAddress.state} -{" "}
+                          {savedAddress.postal_code}
+                        </p>
+                        <p className="text-gray-600">{savedAddress.phone}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        onClick={handleUseSavedAddress}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        disabled={useSavedAddress}
+                      >
+                        {useSavedAddress
+                          ? "✓ Usando esta dirección"
+                          : "Usar esta dirección"}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleUseNewAddress}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Usar dirección diferente
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Información de Entrega */}
-              <Card>
+              <Card className={useSavedAddress ? "opacity-50" : ""}>
                 <CardHeader>
-                  <CardTitle>Entrega</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Información de Entrega</span>
+                    {savedAddress && (
+                      <span className="text-sm text-gray-500">
+                        {useSavedAddress
+                          ? "Usando dirección guardada"
+                          : "Nueva dirección"}
+                      </span>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -177,6 +285,7 @@ export default function CheckoutClient() {
                         handleInputChange("identifier", e.target.value)
                       }
                       placeholder="12345678"
+                      disabled={useSavedAddress}
                     />
                   </div>
 
@@ -189,6 +298,7 @@ export default function CheckoutClient() {
                         handleInputChange("address", e.target.value)
                       }
                       placeholder="Calle, avenida, etc."
+                      disabled={useSavedAddress}
                     />
                   </div>
 
@@ -201,6 +311,7 @@ export default function CheckoutClient() {
                         handleInputChange("details", e.target.value)
                       }
                       placeholder="Apartamento, piso, etc."
+                      disabled={useSavedAddress}
                     />
                   </div>
 
@@ -214,6 +325,7 @@ export default function CheckoutClient() {
                           handleInputChange("postal_code", e.target.value)
                         }
                         placeholder="1429"
+                        disabled={useSavedAddress}
                       />
                     </div>
                     <div>
@@ -225,6 +337,7 @@ export default function CheckoutClient() {
                           handleInputChange("city", e.target.value)
                         }
                         placeholder="CABA"
+                        disabled={useSavedAddress}
                       />
                     </div>
                     <div>
@@ -236,6 +349,7 @@ export default function CheckoutClient() {
                           handleInputChange("state", e.target.value)
                         }
                         placeholder="Buenos Aires"
+                        disabled={useSavedAddress}
                       />
                     </div>
                   </div>
@@ -249,6 +363,7 @@ export default function CheckoutClient() {
                         handleInputChange("phone", e.target.value)
                       }
                       placeholder="+54 9 11 1234-5678"
+                      disabled={useSavedAddress}
                     />
                   </div>
 

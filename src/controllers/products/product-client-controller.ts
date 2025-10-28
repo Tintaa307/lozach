@@ -28,7 +28,7 @@ export async function getProductsClientAction(filters?: {
     if (error) {
       return {
         success: false,
-        data: null,
+        data: undefined,
         message: "Error al obtener los productos",
       }
     }
@@ -36,7 +36,7 @@ export async function getProductsClientAction(filters?: {
     if (!data || data.length === 0) {
       return {
         success: false,
-        data: null,
+        data: undefined,
         message: "No se encontraron productos",
       }
     }
@@ -72,7 +72,7 @@ export async function getProductsByNamesClientAction(
     if (error) {
       return {
         success: false,
-        data: null,
+        data: undefined,
         message: "Error al obtener los productos",
       }
     }
@@ -80,7 +80,7 @@ export async function getProductsByNamesClientAction(
     if (!data || data.length === 0) {
       return {
         success: false,
-        data: null,
+        data: undefined,
         message: "Productos no encontrados",
       }
     }

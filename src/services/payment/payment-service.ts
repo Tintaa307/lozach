@@ -341,6 +341,7 @@ export class PaymentService {
         email: user.email,
         name: user.name,
         buyedProducts,
+        orderItems,
         order,
         shipping,
       })
@@ -408,6 +409,7 @@ export class PaymentService {
         email: user.email,
         name: user.name,
         buyedProducts,
+        orderItems,
         order,
         shipping,
       })

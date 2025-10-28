@@ -1,3 +1,4 @@
+import { OrderItem } from "../order-items/order-items"
 import { Order } from "../order/order"
 import { Shipping } from "../shipping/shipping"
 import { Product } from "../types"
@@ -8,4 +9,5 @@ export interface EmailBody {
   buyedProducts: Product[]
   order: Order
   shipping: Shipping
+  orderItems: OrderItem[]
 }

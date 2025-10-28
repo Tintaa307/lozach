@@ -57,7 +57,7 @@ export default function PaymentSuccessClient() {
                   asChild
                   className="w-full bg-black hover:bg-black/90 text-white"
                 >
-                  <Link href="/dashboard/orders">
+                  <Link href="/profile/my-orders">
                     <Package className="h-4 w-4 mr-2" />
                     Ver Mis Pedidos
                   </Link>

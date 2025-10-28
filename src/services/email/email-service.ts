@@ -11,17 +11,20 @@ export class EmailService {
   }
 
   async sendOrderConfirmationEmail(emailBody: EmailBody): Promise<void> {
-    const { email, name, buyedProducts, order, shipping } = emailBody
+    const { email, name, buyedProducts, order, shipping, orderItems } =
+      emailBody
 
     const { error } = await this.resend.emails.send({
       from: "Lozach <compras@lozachurban.store>",
       to: email, // lozacharg@gmail.com
       subject: "¡Tu compra en Lozach ha sido realizada con éxito!",
       react: OrderConfirmationEmail({
+        email,
         name,
         buyedProducts,
         order,
         shipping,
+        orderItems,
       }),
       text: "",
     })

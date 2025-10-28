@@ -1,3 +1,5 @@
+import { EmailBody } from "@/types/email/email"
+import { OrderItem } from "@/types/order-items/order-items"
 import { Order } from "@/types/order/order"
 import { Product } from "@/types/products/types"
 import { Shipping, ShippingStatus } from "@/types/shipping/shipping"
@@ -16,14 +18,6 @@ import {
   Section,
   Text,
 } from "@react-email/components"
-
-type Props = {
-  logoUrl?: string
-  name: string
-  buyedProducts: Product[]
-  order: Order
-  shipping: Shipping
-}
 
 const formatMoney = (amount: number, currency: string) => {
   return new Intl.NumberFormat("es-AR", {
@@ -70,16 +64,18 @@ const getStatusLabel = (status: ShippingStatus) => {
 }
 
 export default function OrderConfirmationEmail({
-  logoUrl = "https://lozachurban.store/logo-big.png",
   name,
   buyedProducts = [],
   order,
+  orderItems,
   shipping,
-}: Props) {
+}: EmailBody) {
   const previewText = `Gracias por tu compra, ${name}. Tu pedido #${order.id.slice(
     0,
     8
   )} ha sido confirmado.`
+
+  const logoUrl = "https://lozachurban.store/logo-big.png"
 
   return (
     <Html>
@@ -206,11 +202,21 @@ export default function OrderConfirmationEmail({
                   <Column style={productDetailsColumn}>
                     <Text style={productName}>{product.name}</Text>
                     <Text style={productDetail}>
-                      Color: {product.color.join(", ")}
+                      Color:{" "}
+                      {
+                        orderItems.find(
+                          (item) => item.product_id === product.id
+                        )?.color
+                      }
                     </Text>
                     <Text style={productDetail}>Tela: {product.fabric}</Text>
                     <Text style={productDetail}>
-                      Talle: {product.size.talles.join(", ")}
+                      Talle:{" "}
+                      {
+                        orderItems.find(
+                          (item) => item.product_id === product.id
+                        )?.size
+                      }
                     </Text>
                     <Text style={productDetail}>SKU: {product.sku}</Text>
                   </Column>
@@ -274,9 +280,9 @@ export default function OrderConfirmationEmail({
                   enviaremos una notificación cuando esté listo. Por favor trae
                   una identificación válida y tu número de pedido.
                 </Text>
-                <Text style={addressText}>
+                {/* <Text style={addressText}>
                   <strong>ID de Seguimiento:</strong> {shipping.identifier}
-                </Text>
+                </Text> */}
               </div>
             ) : (
               <div>

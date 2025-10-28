@@ -1,7 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-import { ActionResponse } from "@/types/base/types"
+import { ActionResponse } from "@/lib/handlers/actionHandler"
 
 interface Product {
   id: number

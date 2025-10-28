@@ -69,12 +69,8 @@ export class PaymentService {
 
     const validatedData = CreatePreferenceSchema.safeParse(body)
 
-    console.log(shipping_cost)
-
     const shippingCostNumber =
       shipping_cost !== "Gratis" ? Number(shipping_cost) : 0
-
-    console.log(shippingCostNumber)
 
     if (!validatedData.success) {
       throw new InvalidPreferenceDataException(

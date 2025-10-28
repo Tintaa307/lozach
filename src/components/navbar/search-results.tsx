@@ -5,7 +5,6 @@ import Image from "next/image"
 import Link from "next/link"
 import { Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Product } from "@/types/types"
 import { getProductsClientAction } from "@/controllers/products/product-client-controller"
 
 interface SimpleProduct {

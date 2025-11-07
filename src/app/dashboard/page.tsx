@@ -33,7 +33,9 @@ export default async function DashboardPage({
   // Obtener todos los productos
   const productsResult = await getAllProductsAction()
   const allProducts =
-    productsResult.status === 200 ? productsResult.data || [] : []
+    productsResult.status === 200 && productsResult.data
+      ? productsResult.data
+      : []
 
   const sidebarUser = {
     name: user.name,

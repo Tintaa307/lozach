@@ -5,8 +5,7 @@ import ProductsClient from "./ProductsClient"
 
 async function ProductListingContent() {
   const productsResult = await getProducts()
-  const products =
-    productsResult.status === 200 ? productsResult.data || [] : []
+  const products = productsResult.success ? productsResult.data || [] : []
 
   return <ProductsClient initialProducts={products} />
 }

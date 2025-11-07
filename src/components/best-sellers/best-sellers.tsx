@@ -6,14 +6,14 @@ import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { getProductsByNamesClientAction } from "@/controllers/products/product-client-controller"
 import { useRouter } from "next/navigation"
+import { getProductsByNamesClientAction } from "@/controllers/products/product-client-controller"
 
 interface Product {
   id: number
   name: string
   price: number
-  cover_image_url: string
+  image_url: string
   category: string
 }
 
@@ -37,12 +37,10 @@ export default function BestSellers() {
     try {
       const response = await getProductsByNamesClientAction(products_names)
 
-      if (!response.success) {
-        console.log(response.message)
-        return
-      }
-
-      if (!response.data) {
+      if (response.status !== 200 || !response.data) {
+        console.log(
+          response.error || response.message || "Error al obtener productos"
+        )
         return
       }
 
@@ -107,7 +105,7 @@ export default function BestSellers() {
               >
                 <div className="relative aspect-3/2 bg-gray-100 mb-2 overflow-hidden">
                   <Image
-                    src={product.cover_image_url || "/placeholder.svg"}
+                    src={product.image_url || "/placeholder.svg"}
                     alt={product.name}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"

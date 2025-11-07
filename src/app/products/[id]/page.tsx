@@ -19,7 +19,7 @@ export default async function ProductPage({
   // Get product data
   const productResult = await getProductById(parseInt(id))
 
-  if (productResult.status !== 200 || !productResult.data) {
+  if (!productResult.success || !productResult.data) {
     notFound()
   }
 
@@ -27,8 +27,7 @@ export default async function ProductPage({
 
   // Get all products for related products
   const productsResult = await getProducts()
-  const allProducts =
-    productsResult.status === 200 ? productsResult.data || [] : []
+  const allProducts = productsResult.success ? productsResult.data || [] : []
 
   // Filter related products (same category, different product)
   const relatedProducts = allProducts

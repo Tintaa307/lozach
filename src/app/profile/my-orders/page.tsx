@@ -36,11 +36,14 @@ const ServerMyOrders = async () => {
       // Get products and pair with order items for this specific order
       const items: { product: Product; orderItem: OrderItem }[] = []
       for (const orderItem of orderItems) {
-        const product = await actionErrorHandler(async () => {
-          const product = await getProductById(orderItem.product_id)
-          return product.data as Product
+        const productResult = await actionErrorHandler(async () => {
+          const result = await getProductById(orderItem.product_id)
+          if (!result.success || !result.data) {
+            throw new Error("Producto no encontrado")
+          }
+          return result.data as Product
         })
-        items.push({ product, orderItem })
+        items.push({ product: productResult, orderItem })
       }
 
       // Get shipping for this specific order

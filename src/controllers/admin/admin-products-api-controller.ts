@@ -61,8 +61,8 @@ export async function createProductAction(
   values: CreateProductValues
 ): Promise<ApiResponse<Product>> {
   try {
-    const user = await verifyAdminRole()
-    const product = await productService.createProduct(values, user.id)
+    await verifyAdminRole()
+    const product = await productService.createProduct(values)
     return {
       status: 200,
       data: product,
@@ -83,8 +83,8 @@ export async function updateProductAction(
   values: UpdateProductValues
 ): Promise<ApiResponse<Product>> {
   try {
-    const user = await verifyAdminRole()
-    const product = await productService.updateProduct(id, values, user.id)
+    await verifyAdminRole()
+    const product = await productService.updateProduct(id, values)
     return {
       status: 200,
       data: product,
@@ -104,8 +104,8 @@ export async function deleteProductAction(
   id: number
 ): Promise<ApiResponse<undefined>> {
   try {
-    const user = await verifyAdminRole()
-    await productService.deleteProduct(id, user.id)
+    await verifyAdminRole()
+    await productService.deleteProduct(id)
     return {
       status: 200,
       data: undefined,

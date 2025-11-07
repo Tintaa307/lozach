@@ -11,7 +11,7 @@ interface SimpleProduct {
   id: number
   name: string
   price: number
-  cover_image_url: string
+  image_url: string
   category: string
 }
 
@@ -33,7 +33,7 @@ export function SearchResults({
     try {
       const response = await getProductsClientAction()
 
-      if (!response.success) {
+      if (response.status !== 200) {
         return
       }
 
@@ -99,7 +99,7 @@ export function SearchResults({
             >
               <div className="w-[60px] h-[80px] relative shrink-0 bg-gray-100 rounded">
                 <Image
-                  src={product.cover_image_url || "/example-image.jpg"}
+                  src={product.image_url || "/example-image.jpg"}
                   alt={product.name}
                   fill
                   className="object-cover"

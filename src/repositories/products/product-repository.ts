@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
 import { Product } from "@/types/types"
-import { CreateProductValues, ProductFilters } from "@/types/products/types"
+import {
+  CreateProductValues,
+  ProductFilters,
+  UpdateProductValues,
+} from "@/types/products/types"
 import {
   ProductNotFoundException,
   ProductCreationException,
@@ -53,18 +57,12 @@ export class ProductRepository {
       }
 
       if (!data) {
-        throw new ProductNotFoundException(
-          "No se encontraron productos",
-          "No se encontraron productos"
-        )
+        return []
       }
 
       return data as Product[]
     } catch (error) {
-      if (
-        error instanceof ProductFetchException ||
-        error instanceof ProductNotFoundException
-      ) {
+      if (error instanceof ProductFetchException) {
         throw error
       }
       throw new ProductFetchException(
@@ -135,7 +133,7 @@ export class ProductRepository {
 
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, image_url, category")
+        .select("id, name, price, image_url, category, color, size, fabric, sku")
         .in("id", ids)
 
       if (error) {
@@ -146,18 +144,14 @@ export class ProductRepository {
       }
 
       if (!data || data.length === 0) {
-        throw new ProductNotFoundException(
-          "Productos no encontrados",
-          "Productos no encontrados"
-        )
+        return []
       }
 
       return data as Product[]
     } catch (error) {
       if (
-        error instanceof ProductNotFoundException ||
-        error instanceof ValidationException ||
-        error instanceof ProductFetchException
+        error instanceof ProductFetchException ||
+        error instanceof ValidationException
       ) {
         throw error
       }
@@ -182,7 +176,7 @@ export class ProductRepository {
 
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, image_url, category")
+        .select("id, name, price, image_url, category, color, size, fabric, sku")
         .in("name", names)
         .limit(6)
 
@@ -194,18 +188,14 @@ export class ProductRepository {
       }
 
       if (!data || data.length === 0) {
-        throw new ProductNotFoundException(
-          "Productos no encontrados",
-          "Productos no encontrados"
-        )
+        return []
       }
 
       return data as Product[]
     } catch (error) {
       if (
-        error instanceof ProductNotFoundException ||
-        error instanceof ValidationException ||
-        error instanceof ProductFetchException
+        error instanceof ProductFetchException ||
+        error instanceof ValidationException
       ) {
         throw error
       }
@@ -216,33 +206,8 @@ export class ProductRepository {
     }
   }
 
-  async createProduct(
-    values: CreateProductValues,
-    userId?: string
-  ): Promise<Product> {
+  async createProduct(values: CreateProductValues): Promise<Product> {
     const supabase = createAdminClient()
-
-    if (userId) {
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", userId)
-        .single()
-
-      if (userError || !userData) {
-        throw new ProductCreationException(
-          "Usuario no encontrado",
-          "Usuario no encontrado"
-        )
-      }
-
-      if (userData.role !== "admin") {
-        throw new ProductCreationException(
-          "No autorizado para crear productos",
-          "Solo los administradores pueden crear productos"
-        )
-      }
-    }
 
     const validate_fields = CreateProductSchema.safeParse(values)
 
@@ -297,33 +262,9 @@ export class ProductRepository {
 
   async updateProduct(
     id: number,
-    values: Partial<CreateProductValues>,
-    userId?: string
+    values: UpdateProductValues
   ): Promise<Product> {
     const supabase = createAdminClient()
-
-    // Validate user is admin (if userId provided)
-    if (userId) {
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", userId)
-        .single()
-
-      if (userError || !userData) {
-        throw new ProductUpdateException(
-          "Usuario no encontrado",
-          "Usuario no encontrado"
-        )
-      }
-
-      if (userData.role !== "admin") {
-        throw new ProductUpdateException(
-          "No autorizado para actualizar productos",
-          "Solo los administradores pueden actualizar productos"
-        )
-      }
-    }
 
     const { data, error } = await supabase
       .from("products")
@@ -352,31 +293,8 @@ export class ProductRepository {
     return data as Product
   }
 
-  async deleteProduct(id: number, userId?: string): Promise<void> {
+  async deleteProduct(id: number): Promise<void> {
     const supabase = createAdminClient()
-
-    // Validate user is admin (if userId provided)
-    if (userId) {
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", userId)
-        .single()
-
-      if (userError || !userData) {
-        throw new ProductDeletionException(
-          "Usuario no encontrado",
-          "Usuario no encontrado"
-        )
-      }
-
-      if (userData.role !== "admin") {
-        throw new ProductDeletionException(
-          "No autorizado para eliminar productos",
-          "Solo los administradores pueden eliminar productos"
-        )
-      }
-    }
 
     const { error } = await supabase.from("products").delete().eq("id", id)
 
@@ -384,6 +302,59 @@ export class ProductRepository {
       throw new ProductDeletionException(
         error.message,
         "Error al eliminar el producto"
+      )
+    }
+  }
+
+  async searchProducts(
+    query: string,
+    filters?: ProductFilters
+  ): Promise<Product[]> {
+    const supabase = await createClient()
+
+    try {
+      let searchQuery = supabase
+        .from("products")
+        .select("*")
+        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+
+      if (filters?.category) {
+        searchQuery = searchQuery.eq("category", filters.category)
+      }
+
+      if (filters?.color && filters.color.length > 0) {
+        searchQuery = searchQuery.overlaps("color", filters.color)
+      }
+
+      if (filters?.fabric) {
+        searchQuery = searchQuery.eq("fabric", filters.fabric)
+      }
+
+      if (filters?.minPrice) {
+        searchQuery = searchQuery.gte("price", filters.minPrice)
+      }
+
+      if (filters?.maxPrice) {
+        searchQuery = searchQuery.lte("price", filters.maxPrice)
+      }
+
+      const { data, error } = await searchQuery
+
+      if (error) {
+        throw new ProductFetchException(
+          error.message,
+          "Error al buscar productos"
+        )
+      }
+
+      return (data as Product[]) || []
+    } catch (error) {
+      if (error instanceof ProductFetchException) {
+        throw error
+      }
+      throw new ProductFetchException(
+        "Error interno al buscar productos",
+        "Error al buscar productos"
       )
     }
   }

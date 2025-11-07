@@ -35,7 +35,7 @@ export default async function EditProductPage({
 
   // Obtener el producto
   const productResult = await getProductById(productId)
-  if (productResult.status !== 200 || !productResult.data) {
+  if (!productResult.success || !productResult.data) {
     notFound()
   }
 

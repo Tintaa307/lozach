@@ -13,7 +13,7 @@ interface Product {
   id: number
   name: string
   price: number
-  cover_image_url: string
+  image_url: string
   category: string
 }
 
@@ -33,12 +33,8 @@ export default function AuthorRecommendations() {
     try {
       const response = await getProductsByNamesClientAction(products_names)
 
-      if (!response.success) {
-        console.log(response.message)
-        return
-      }
-
-      if (!response.data) {
+      if (response.status !== 200 || !response.data) {
+        console.log(response.error || response.message || "Error al obtener productos")
         return
       }
 
@@ -96,7 +92,7 @@ export default function AuthorRecommendations() {
             >
               <div className="relative aspect-3/4 bg-gray-100 mb-2">
                 <Image
-                  src={product.cover_image_url || "/placeholder.svg"}
+                  src={product.image_url || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-cover"

@@ -57,7 +57,7 @@ export default function CatagoriesSection() {
             className="relative overflow-hidden group z-10"
           >
             <div className="absolute w-full h-full bg-black/40 z-20" />
-            <div className="relative aspect-[5/6]">
+            <div className="relative aspect-5/6">
               <Image
                 src={banner.image || "/placeholder.svg"}
                 alt={banner.title}

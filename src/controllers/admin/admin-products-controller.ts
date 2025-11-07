@@ -37,8 +37,8 @@ export const getProductById = async (id: number) => {
 
 export const createProduct = async (values: CreateProductValues) => {
   return actionHandler(async () => {
-    const user = await verifyAdminRole()
-    const product = await productService.createProduct(values, user.id)
+    await verifyAdminRole()
+    const product = await productService.createProduct(values)
     return product as Product
   })
 }
@@ -48,16 +48,16 @@ export const updateProduct = async (
   values: UpdateProductValues
 ) => {
   return actionHandler(async () => {
-    const user = await verifyAdminRole()
-    const product = await productService.updateProduct(id, values, user.id)
+    await verifyAdminRole()
+    const product = await productService.updateProduct(id, values)
     return product as Product
   })
 }
 
 export const deleteProduct = async (id: number) => {
   return actionHandler(async () => {
-    const user = await verifyAdminRole()
-    await productService.deleteProduct(id, user.id)
+    await verifyAdminRole()
+    await productService.deleteProduct(id)
     return undefined
   })
 }

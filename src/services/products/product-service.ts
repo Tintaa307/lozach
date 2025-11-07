@@ -29,22 +29,40 @@ export class ProductService {
     return await this.productRepository.getProductsByNames(names)
   }
 
-  async createProduct(
-    values: CreateProductValues,
-    userId?: string
-  ): Promise<Product> {
-    return await this.productRepository.createProduct(values, userId)
+  async createProduct(values: CreateProductValues): Promise<Product> {
+    return await this.productRepository.createProduct(values)
   }
 
   async updateProduct(
     id: number,
-    values: UpdateProductValues,
-    userId?: string
+    values: UpdateProductValues
   ): Promise<Product> {
-    return await this.productRepository.updateProduct(id, values, userId)
+    return await this.productRepository.updateProduct(id, values)
   }
 
-  async deleteProduct(id: number, userId?: string): Promise<void> {
-    return await this.productRepository.deleteProduct(id, userId)
+  async deleteProduct(id: number): Promise<void> {
+    return await this.productRepository.deleteProduct(id)
+  }
+
+  async searchProducts(
+    query: string,
+    filters?: ProductFilters
+  ): Promise<Product[]> {
+    return await this.productRepository.searchProducts(query, filters)
+  }
+
+  async getRelatedProducts(
+    currentProductId: number,
+    category: string,
+    limit: number = 4
+  ): Promise<Product[]> {
+    const products = await this.productRepository.getAllProducts({
+      category,
+      search: undefined,
+    })
+    
+    return products
+      .filter((product) => product.id !== currentProductId)
+      .slice(0, limit)
   }
 }

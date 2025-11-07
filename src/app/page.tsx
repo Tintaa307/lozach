@@ -3,6 +3,7 @@ import BestSellers from "@/components/best-sellers/best-sellers"
 import CatagoriesSection from "@/components/categories-section/categories-section"
 import Hero from "@/components/hero/Hero"
 import Newsletter from "@/components/newsletter/Newsletter"
+import { WholesaleSection } from "@/components/wholesaler/Wholesaler"
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <CatagoriesSection />
       <Newsletter />
       <AuthorRecommendations />
+      <WholesaleSection />
     </main>
   )
 }

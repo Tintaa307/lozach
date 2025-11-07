@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { MessageCircle, Package, TrendingDown, Users } from "lucide-react"
+import { Package, TrendingDown, Users } from "lucide-react"
 
 export function WholesaleSection() {
   const whatsappNumber = "5491122791822" // Reemplazar con tu número

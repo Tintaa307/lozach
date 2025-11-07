@@ -6,6 +6,7 @@ import {
   CreateProductValues,
   UpdateProductValues,
   ProductFilters,
+  CategoryType,
 } from "@/types/products/types"
 
 const productService = new ProductService()
@@ -73,7 +74,7 @@ export const searchProducts = async (
 
 export const getRelatedProducts = async (
   currentProductId: number,
-  category: string
+  category: CategoryType
 ) => {
   return actionHandler(async () => {
     const result = await productService.getRelatedProducts(

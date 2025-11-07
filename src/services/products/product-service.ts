@@ -4,6 +4,7 @@ import {
   CreateProductValues,
   ProductFilters,
   UpdateProductValues,
+  CategoryType,
 } from "@/types/products/types"
 
 export class ProductService {
@@ -53,7 +54,7 @@ export class ProductService {
 
   async getRelatedProducts(
     currentProductId: number,
-    category: string,
+    category: CategoryType,
     limit: number = 4
   ): Promise<Product[]> {
     const products = await this.productRepository.getAllProducts({

@@ -9,7 +9,7 @@ import {
   getRelatedProducts,
 } from "./product-controller"
 import { Product } from "@/types/types"
-import { ProductFilters } from "@/types/products/types"
+import { ProductFilters, CategoryType } from "@/types/products/types"
 import { ApiResponse } from "@/types/base/types"
 
 export async function getProductsClientAction(
@@ -155,7 +155,7 @@ export async function searchProductsClientAction(
 
 export async function getRelatedProductsClientAction(
   currentProductId: number,
-  category: string
+  category: CategoryType
 ): Promise<ApiResponse<Product[]>> {
   try {
     const result = await getRelatedProducts(currentProductId, category)

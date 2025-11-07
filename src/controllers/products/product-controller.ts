@@ -7,7 +7,6 @@ import {
   UpdateProductValues,
   ProductFilters,
 } from "@/types/products/types"
-import { Product } from "@/types/types"
 
 const productService = new ProductService()
 

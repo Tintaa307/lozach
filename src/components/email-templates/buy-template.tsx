@@ -1,8 +1,5 @@
 import { EmailBody } from "@/types/email/email"
-import { OrderItem } from "@/types/order-items/order-items"
-import { Order } from "@/types/order/order"
-import { Product } from "@/types/products/types"
-import { Shipping, ShippingStatus } from "@/types/shipping/shipping"
+import { ShippingStatus } from "@/types/shipping/shipping"
 import {
   Body,
   Container,

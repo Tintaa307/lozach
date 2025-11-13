@@ -39,15 +39,77 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = "/login"
-    return NextResponse.redirect(url)
+  const pathname = request.nextUrl.pathname
+
+  // Rutas públicas que no requieren autenticación
+  const publicRoutes = ["/login", "/auth"]
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
+
+  // Si hay usuario, obtener su rol desde la base de datos (solo si es necesario)
+  let userRole: string | null = null
+  const needsRoleCheck = pathname.includes("/dashboard")
+
+  if (user && needsRoleCheck) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    userRole = userData?.role || null
+  }
+
+  // Validación para rutas de dashboard: requiere autenticación y rol admin
+  if (pathname.includes("/dashboard")) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      // Crear redirect manteniendo las cookies del supabaseResponse
+      const redirectResponse = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value)
+      })
+      return redirectResponse
+    }
+
+    if (userRole !== "admin") {
+      const url = request.nextUrl.clone()
+      url.pathname = "/"
+      // Crear redirect manteniendo las cookies del supabaseResponse
+      const redirectResponse = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value)
+      })
+      return redirectResponse
+    }
+  }
+
+  // Validación para checkout: requiere autenticación
+  if (pathname.startsWith("/checkout")) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      // Crear redirect manteniendo las cookies del supabaseResponse
+      const redirectResponse = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value)
+      })
+      return redirectResponse
+    }
+  }
+
+  // Validación para profile: requiere autenticación
+  if (pathname.startsWith("/profile")) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      // Crear redirect manteniendo las cookies del supabaseResponse
+      const redirectResponse = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie.name, cookie.value)
+      })
+      return redirectResponse
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

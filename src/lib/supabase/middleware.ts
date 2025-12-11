@@ -42,8 +42,6 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Rutas públicas que no requieren autenticación
-  const publicRoutes = ["/login", "/auth"]
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
 
   // Si hay usuario, obtener su rol desde la base de datos (solo si es necesario)
   let userRole: string | null = null

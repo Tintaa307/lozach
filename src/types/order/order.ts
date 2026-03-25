@@ -1,3 +1,9 @@
+import { OrderItem } from "@/types/order-items/order-items"
+
+export interface OrderWithItems extends Order {
+  order_items: OrderItem[]
+}
+
 export interface Order {
   id: string
   created_at: string

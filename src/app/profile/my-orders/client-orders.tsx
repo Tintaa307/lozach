@@ -15,7 +15,7 @@ export interface Product {
   id: number
   created_at: string
   name: string
-  stock: "consultar"
+  stock: string
   description: string | null
   category: "adult" | "child"
   color: string[]
@@ -58,11 +58,11 @@ export interface Shipping {
   shipping_status: ShippingStatus
   address: string
   details: string
-  postal_code: string
+  postal_code: number
   city: string
   state: string
   phone: string
-  identifier: string
+  identifier: number
   updated_at: string
 }
 
@@ -127,8 +127,7 @@ export default function MyOrdersSection({ orders }: Props) {
       // Search by shipping identifier
       if (
         shipping.identifier &&
-        typeof shipping.identifier === "string" &&
-        shipping.identifier.toLowerCase().includes(searchLower)
+        String(shipping.identifier).toLowerCase().includes(searchLower)
       )
         return true
 

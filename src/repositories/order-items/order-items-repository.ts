@@ -2,7 +2,6 @@ import {
   OrderItemsCreationException,
   OrderItemsFetchException,
 } from "@/exceptions/order-items/order-items-exceptions"
-import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
 import {
   CreateOrderItemValues,
@@ -11,11 +10,9 @@ import {
 
 export class OrderItemsRepository {
   async createOrderItem(orderItem: CreateOrderItemValues): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { error } = await supabase.from("order_items").insert(orderItem)
-
-    console.error(error)
 
     if (error) {
       throw new OrderItemsCreationException(

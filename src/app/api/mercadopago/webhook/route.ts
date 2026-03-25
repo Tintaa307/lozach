@@ -3,21 +3,26 @@ import { MercadoPagoConfig, Payment } from "mercadopago"
 
 const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN!
 
+// GET endpoint for MercadoPago webhook verification ping
+export async function GET(): Promise<Response> {
+  return new Response("OK", { status: 200 })
+}
+
 export async function POST(req: Request): Promise<Response> {
   try {
     const body = await req.json()
 
-    // Validate required fields
+    // Validate required fields — still return 200 to prevent MP retries
     if (!body.data?.id || !body.type) {
       console.error("Invalid webhook payload:", body)
-      return new Response("Invalid payload", { status: 400 })
+      return new Response("OK", { status: 200 })
     }
 
     const payment_id = body.data.id as string
     const topic = body.type as string
 
     if (!topic.includes("payment")) {
-      return new Response("Not a payment notification", { status: 200 })
+      return new Response("OK", { status: 200 })
     }
 
     const client = new MercadoPagoConfig({
@@ -28,7 +33,8 @@ export async function POST(req: Request): Promise<Response> {
     const paymentDetails = await payment.get({ id: payment_id })
 
     if (!paymentDetails) {
-      return new Response("Payment not found", { status: 404 })
+      console.error("Payment not found for id:", payment_id)
+      return new Response("OK", { status: 200 })
     }
 
     if (topic.includes("payment") && payment_id) {
@@ -45,24 +51,9 @@ export async function POST(req: Request): Promise<Response> {
 
     return new Response("OK", { status: 200 })
   } catch (error) {
+    // Always return 200 to prevent MercadoPago from retrying infinitely.
+    // Errors are logged for debugging but the webhook is acknowledged.
     console.error("Webhook processing error:", error)
-
-    // Return different status codes based on error type
-    if (error instanceof Error) {
-      if (
-        error.message.includes("not found") ||
-        error.message.includes("404")
-      ) {
-        return new Response("Resource not found", { status: 404 })
-      }
-      if (
-        error.message.includes("validation") ||
-        error.message.includes("invalid")
-      ) {
-        return new Response("Invalid request", { status: 400 })
-      }
-    }
-
-    return new Response("Internal server error", { status: 500 })
+    return new Response("OK", { status: 200 })
   }
 }

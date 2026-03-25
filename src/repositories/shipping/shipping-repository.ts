@@ -3,7 +3,6 @@ import {
   ShippingUpdateException,
   ShippingFetchException,
 } from "@/exceptions/shipping/shipping-exceptions"
-import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
 import {
   CreateShippingValues,
@@ -13,7 +12,7 @@ import {
 
 export class ShippingRepository {
   async createShipping(shipping: CreateShippingValues): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { error } = await supabase.from("shipping").insert(shipping)
 

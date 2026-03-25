@@ -245,7 +245,9 @@ export class ProductRepository {
         created_at: new Date().toISOString(),
         sku:
           values.name.slice(0, 3).toUpperCase() +
-          Math.random().toString(36).substring(2, 15),
+          "-" +
+          Date.now().toString(36) +
+          crypto.randomUUID().slice(0, 6),
       })
       .select()
       .single()

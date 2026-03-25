@@ -1,4 +1,7 @@
-import { SubscribersRepository } from "@/repositories/subscribers/subscribers-repository"
+import {
+  SubscribersRepository,
+  Subscriber,
+} from "@/repositories/subscribers/subscribers-repository"
 
 export class SubscribersService {
   private readonly subscriberRepository: SubscribersRepository
@@ -6,6 +9,10 @@ export class SubscribersService {
   constructor(subscriberRepository?: SubscribersRepository) {
     this.subscriberRepository =
       subscriberRepository || new SubscribersRepository()
+  }
+
+  async getAllSubscribers(): Promise<Subscriber[]> {
+    return await this.subscriberRepository.getAllSubscribers()
   }
 
   async createSubscriber(email: string): Promise<void> {

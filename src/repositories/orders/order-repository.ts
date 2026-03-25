@@ -9,12 +9,13 @@ import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
 import {
   CreateOrderValues,
   Order,
+  OrderWithItems,
   UpdateOrderValues,
 } from "@/types/order/order"
 
 export class OrderRepository {
   async createOrder(order: CreateOrderValues): Promise<Order> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { error, data } = await supabase
       .from("orders")
@@ -74,6 +75,24 @@ export class OrderRepository {
     return
   }
 
+  async getAllOrders(): Promise<OrderWithItems[]> {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      throw new OrderFetchException(
+        error.message,
+        "Error al obtener las órdenes"
+      )
+    }
+
+    return (data as OrderWithItems[]) || []
+  }
+
   async getOrders(userId: string): Promise<Order[]> {
     const supabase = await createClient()
 
@@ -83,8 +102,6 @@ export class OrderRepository {
       .eq("user_id", userId)
       .in("collection_status", ["approved", "cancelled"])
       .order("created_at", { ascending: false })
-
-    console.log(error)
 
     if (error) {
       throw new OrderFetchException(

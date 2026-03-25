@@ -4,7 +4,7 @@ export interface Product {
   id: number
   created_at: string
   name: string
-  stock: "consultar"
+  stock: string
   description: string | null
   category: "adult" | "child"
   color: string[]

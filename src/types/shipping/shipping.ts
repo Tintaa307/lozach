@@ -9,11 +9,11 @@ export interface Shipping {
   shipping_status: ShippingStatus
   address: string
   details: string
-  postal_code: string
+  postal_code: number
   city: string
   state: string
   phone: string
-  identifier: string
+  identifier: number
   updated_at: string
 }
 
@@ -26,11 +26,11 @@ export interface CreateShippingValues {
   shipping_status: ShippingStatus
   address: string
   details: string
-  postal_code: string
+  postal_code: number
   city: string
   state: string
   phone: string
-  identifier: string
+  identifier: number
 }
 
 export type ShippingStatus = "draft" | "shipped" | "ready" | "cancelled"
@@ -43,11 +43,11 @@ export interface UpdateShippingValues {
   provider?: "CA"
   address?: string
   details?: string
-  postal_code?: string
+  postal_code?: number
   city?: string
   state?: string
   phone?: string
-  identifier?: string
+  identifier?: number
   shipping_status: ShippingStatus
   updated_at: string
 }

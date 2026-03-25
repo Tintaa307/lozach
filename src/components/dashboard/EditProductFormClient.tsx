@@ -13,11 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { updateProductClientAction } from "@/controllers/admin/admin-products-client-controller"
+import {
+  uploadProductImagesClientAction,
+  deleteProductImagesClientAction,
+} from "@/controllers/storage/storage-client-controller"
 import { Product, UpdateProductValues } from "@/types/products/types"
 import { toast } from "sonner"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { MiniCardManager } from "@/components/dashboard/MiniCardManager"
-import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 interface EditProductFormClientProps {
@@ -26,6 +29,20 @@ interface EditProductFormClientProps {
 
 export function EditProductFormClient({ product }: EditProductFormClientProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
+
+  // Track new files selected by the user
+  const [coverImageFiles, setCoverImageFiles] = useState<File[]>([])
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([])
+
+  // Track which existing URLs remain (not removed by user)
+  const [currentCoverUrl, setCurrentCoverUrl] = useState<string | null>(
+    product.image_url
+  )
+  const [currentAdditionalUrls, setCurrentAdditionalUrls] = useState<string[]>(
+    product.images_urls || []
+  )
+
   const [formData, setFormData] = useState<UpdateProductValues>({
     name: product.name,
     stock: product.stock,
@@ -35,8 +52,6 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
     fabric: product.fabric,
     price: product.price,
     size: product.size,
-    image_url: product.image_url || "",
-    images_urls: product.images_urls || [],
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,7 +59,69 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
     setIsLoading(true)
 
     try {
-      const response = await updateProductClientAction(product.id, formData)
+      const hasNewFiles =
+        coverImageFiles.length > 0 || additionalImageFiles.length > 0
+
+      // Build image values from existing URLs (ones user didn't remove)
+      let finalImageUrl: string | null = currentCoverUrl
+      let finalImagesUrls: string[] = [...currentAdditionalUrls]
+
+      // Step 1: Upload new files if any
+      if (hasNewFiles) {
+        setIsUploadingImages(true)
+        toast.info("Subiendo imágenes nuevas...")
+
+        // Delete old images from storage before re-uploading
+        await deleteProductImagesClientAction(product.id)
+
+        // Combine: new cover file (or keep existing), plus new additional files
+        const allFiles = [...coverImageFiles, ...additionalImageFiles]
+
+        if (allFiles.length > 0) {
+          const uploadResult = await uploadProductImagesClientAction(
+            product.id,
+            allFiles
+          )
+
+          if (uploadResult.status === 200 && uploadResult.data) {
+            // If we uploaded a new cover, use it; otherwise keep existing
+            if (coverImageFiles.length > 0) {
+              finalImageUrl = uploadResult.data.image_url
+              finalImagesUrls = [
+                ...currentAdditionalUrls,
+                ...uploadResult.data.images_urls,
+              ]
+            } else {
+              // Only additional images were uploaded; first upload becomes part of images_urls
+              finalImagesUrls = [
+                ...currentAdditionalUrls,
+                ...(uploadResult.data.image_url
+                  ? [uploadResult.data.image_url]
+                  : []),
+                ...uploadResult.data.images_urls,
+              ]
+            }
+          } else {
+            toast.error(uploadResult.error || "Error al subir las imágenes")
+            setIsUploadingImages(false)
+            setIsLoading(false)
+            return
+          }
+        }
+
+        setIsUploadingImages(false)
+      }
+
+      // Step 2: Update product with all data + final image URLs
+      const updateValues: UpdateProductValues = {
+        ...formData,
+        description: formData.description || null,
+        // null = explicitly clear the image in DB; string = set the URL
+        image_url: finalImageUrl,
+        images_urls: finalImagesUrls,
+      }
+
+      const response = await updateProductClientAction(product.id, updateValues)
 
       if (response.status === 200) {
         toast.success("Producto actualizado exitosamente")
@@ -97,22 +174,35 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
     }))
   }
 
+  // Handle cover image changes from ImageUpload
+  const handleCoverImagesChange = (images: string[]) => {
+    if (images.length === 0) {
+      // User removed the cover image
+      setCurrentCoverUrl(null)
+    }
+    // If images[0] is a data URL (new file), we ignore it for the URL state
+    // because the actual upload happens on submit via coverImageFiles
+    // If it's an existing URL, keep it
+    if (images.length > 0 && !images[0].startsWith("data:")) {
+      setCurrentCoverUrl(images[0])
+    }
+  }
+
+  // Handle additional images changes from ImageUpload
+  const handleAdditionalImagesChange = (images: string[]) => {
+    // Keep only the real URLs (not data: previews)
+    const realUrls = images.filter((img) => !img.startsWith("data:"))
+    setCurrentAdditionalUrls(realUrls)
+  }
+
   return (
     <div className="flex flex-col gap-4 py-6 px-6 w-full">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/dashboard">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver al Dashboard
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Editar Producto</h1>
-            <p className="text-gray-600">
-              Modifica la información del producto
-            </p>
-          </div>
+      <div className="flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Editar Producto</h1>
+          <p className="text-gray-600">
+            Modifica la información del producto
+          </p>
         </div>
       </div>
 
@@ -241,13 +331,9 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
             <ImageUpload
               label="Imagen de Portada"
               maxImages={1}
-              onImagesChange={(images) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  image_url: images[0] || "",
-                }))
-              }
-              images={formData.image_url ? [formData.image_url] : []}
+              onImagesChange={handleCoverImagesChange}
+              onFilesChange={setCoverImageFiles}
+              images={currentCoverUrl ? [currentCoverUrl] : []}
               isMultiple={false}
             />
 
@@ -255,19 +341,23 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
             <ImageUpload
               label="Imágenes Adicionales (Máximo 5)"
               maxImages={5}
-              onImagesChange={(images) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  images_urls: images,
-                }))
-              }
-              images={formData.images_urls || []}
+              onImagesChange={handleAdditionalImagesChange}
+              onFilesChange={setAdditionalImageFiles}
+              images={currentAdditionalUrls}
               isMultiple={true}
             />
 
             <div className="flex gap-4">
-              <Button type="submit" disabled={isLoading} className="flex-1">
-                {isLoading ? "Actualizando..." : "Actualizar Producto"}
+              <Button
+                type="submit"
+                disabled={isLoading || isUploadingImages}
+                className="flex-1"
+              >
+                {isLoading
+                  ? isUploadingImages
+                    ? "Subiendo imágenes..."
+                    : "Actualizando..."
+                  : "Actualizar Producto"}
               </Button>
               <Button type="button" variant="outline" asChild>
                 <Link href="/dashboard">Cancelar</Link>

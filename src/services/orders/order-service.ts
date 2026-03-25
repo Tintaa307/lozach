@@ -2,6 +2,7 @@ import { OrderRepository } from "@/repositories/orders/order-repository"
 import {
   CreateOrderValues,
   Order,
+  OrderWithItems,
   UpdateOrderValues,
 } from "@/types/order/order"
 
@@ -30,6 +31,10 @@ export class OrderService {
 
   async updateOrder(id: string, order: UpdateOrderValues): Promise<void> {
     return await this.orderRepository.updateOrder(id, order)
+  }
+
+  async getAllOrders(): Promise<OrderWithItems[]> {
+    return await this.orderRepository.getAllOrders()
   }
 
   async getOrders(userId: string): Promise<Order[]> {

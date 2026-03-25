@@ -1,110 +1,62 @@
-import type React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Package, Eye, CheckCircle, Clock, XCircle } from "lucide-react"
+import {
+  ShoppingBag,
+  CircleCheck,
+  Clock,
+  TrendingUp,
+  ArrowUpRight,
+} from "lucide-react"
+import { getAllOrdersAction } from "@/controllers/admin/admin-orders-api-controller"
+import { getUser } from "@/controllers/auth/auth-controller"
+import { redirect } from "next/navigation"
+import { OrdersTableClient } from "@/components/dashboard/OrdersTableClient"
 
-// Mock data para órdenes
-const orders = [
-  {
-    id: "ORD-001",
-    customer: "María González",
-    email: "maria@email.com",
-    total: 45000,
-    status: "completed",
-    date: "2024-01-15",
-    items: 3,
-  },
-  {
-    id: "ORD-002",
-    customer: "Carlos López",
-    email: "carlos@email.com",
-    total: 32000,
-    status: "pending",
-    date: "2024-01-14",
-    items: 2,
-  },
-  {
-    id: "ORD-003",
-    customer: "Ana Martínez",
-    email: "ana@email.com",
-    total: 28000,
-    status: "processing",
-    date: "2024-01-13",
-    items: 1,
-  },
-  {
-    id: "ORD-004",
-    customer: "Luis Rodríguez",
-    email: "luis@email.com",
-    total: 67000,
-    status: "cancelled",
-    date: "2024-01-12",
-    items: 4,
-  },
-]
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "completed":
-      return <CheckCircle className="h-4 w-4 text-green-500" />
-    case "pending":
-      return <Clock className="h-4 w-4 text-yellow-500" />
-    case "processing":
-      return <Package className="h-4 w-4 text-blue-500" />
-    case "cancelled":
-      return <XCircle className="h-4 w-4 text-red-500" />
-    default:
-      return <Clock className="h-4 w-4 text-gray-500" />
-  }
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
 }
 
-const getStatusText = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "Completada"
-    case "pending":
-      return "Pendiente"
-    case "processing":
-      return "Procesando"
-    case "cancelled":
-      return "Cancelada"
-    default:
-      return "Desconocido"
+export default async function OrdersPage() {
+  const userResult = await getUser()
+  if (
+    !userResult.success ||
+    !userResult.data ||
+    userResult.data.role !== "admin"
+  ) {
+    redirect("/login")
   }
-}
 
-const getStatusBadgeVariant = (status: string) => {
-  switch (status) {
-    case "completed":
-      return "default"
-    case "pending":
-      return "secondary"
-    case "processing":
-      return "outline"
-    case "cancelled":
-      return "destructive"
-    default:
-      return "secondary"
-  }
-}
-
-export default function OrdersPage() {
-  const sidebarUser = {
-    name: "Admin",
-    email: "admin@lozach.com",
-    avatar: "/avatars/admin.jpg",
-  }
+  const user = userResult.data
+  const ordersResult = await getAllOrdersAction()
+  const orders =
+    ordersResult.status === 200 && ordersResult.data ? ordersResult.data : []
 
   const totalOrders = orders.length
-  const completedOrders = orders.filter(o => o.status === "completed").length
-  const pendingOrders = orders.filter(o => o.status === "pending").length
+  const approvedOrders = orders.filter(
+    (o) => o.collection_status === "approved"
+  ).length
+  const pendingOrders = orders.filter(
+    (o) => o.collection_status === "pending"
+  ).length
   const totalRevenue = orders
-    .filter(o => o.status === "completed")
-    .reduce((sum, order) => sum + order.total, 0)
+    .filter((o) => o.collection_status === "approved")
+    .reduce((sum, order) => sum + order.total_amount, 0)
+
+  const approvedRate =
+    totalOrders > 0 ? Math.round((approvedOrders / totalOrders) * 100) : 0
+
+  const sidebarUser = {
+    name: user.name,
+    email: user.email,
+    avatar: "/avatars/admin.jpg",
+  }
 
   return (
     <div className="min-h-screen w-full">
@@ -114,77 +66,94 @@ export default function OrdersPage() {
           <SiteHeader />
           <div className="flex flex-1 flex-col w-full">
             <div className="@container/main flex flex-1 flex-col gap-2 w-full">
-              <div className="flex flex-col gap-4 py-6 px-6 w-full">
+              <div className="flex flex-col gap-6 py-6 px-6 w-full">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-3xl font-bold">Gestión de Órdenes</h1>
-                    <p className="text-gray-600">
-                      Administra las órdenes de tus clientes
-                    </p>
-                  </div>
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight">
+                    Ventas
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Seguimiento y gestión de las órdenes de tu tienda
+                  </p>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Card>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="relative overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
                         Total Órdenes
                       </CardTitle>
-                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <div className="rounded-lg bg-muted p-2">
+                        <ShoppingBag className="h-4 w-4 text-foreground" />
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{totalOrders}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Todas las órdenes
+                      <div className="text-3xl font-bold tracking-tight">
+                        {totalOrders}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {approvedRate}% tasa de aprobación
                       </p>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="relative overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Completadas
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                        Aprobadas
                       </CardTitle>
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/50 p-2">
+                        <CircleCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{completedOrders}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Órdenes completadas
-                      </p>
+                      <div className="text-3xl font-bold tracking-tight">
+                        {approvedOrders}
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <ArrowUpRight className="h-3 w-3 text-emerald-600" />
+                        <p className="text-xs text-emerald-600 font-medium">
+                          Pagos confirmados
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="relative overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
                         Pendientes
                       </CardTitle>
-                      <Clock className="h-4 w-4 text-yellow-500" />
+                      <div className="rounded-lg bg-amber-100 dark:bg-amber-950/50 p-2">
+                        <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{pendingOrders}</div>
-                      <p className="text-xs text-muted-foreground">
-                        Órdenes pendientes
+                      <div className="text-3xl font-bold tracking-tight">
+                        {pendingOrders}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Esperando confirmación
                       </p>
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="relative overflow-hidden">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
                         Ingresos
                       </CardTitle>
-                      <Package className="h-4 w-4 text-muted-foreground" />
+                      <div className="rounded-lg bg-muted p-2">
+                        <TrendingUp className="h-4 w-4 text-foreground" />
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">
-                        ${totalRevenue.toLocaleString()}
+                      <div className="text-3xl font-bold tracking-tight">
+                        {formatCurrency(totalRevenue)}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Ingresos totales
+                      <p className="text-xs text-muted-foreground mt-1">
+                        De órdenes aprobadas
                       </p>
                     </CardContent>
                   </Card>
@@ -192,73 +161,21 @@ export default function OrdersPage() {
 
                 {/* Orders Table */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Lista de Órdenes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left p-2">ID</th>
-                            <th className="text-left p-2">Cliente</th>
-                            <th className="text-left p-2">Email</th>
-                            <th className="text-left p-2">Total</th>
-                            <th className="text-left p-2">Estado</th>
-                            <th className="text-left p-2">Fecha</th>
-                            <th className="text-left p-2">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {orders.map((order) => (
-                            <tr key={order.id} className="border-b">
-                              <td className="p-2">
-                                <span className="font-medium">{order.id}</span>
-                              </td>
-                              <td className="p-2">
-                                <div>
-                                  <div className="font-medium">{order.customer}</div>
-                                  <div className="text-sm text-gray-500">
-                                    {order.items} productos
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="p-2">
-                                <span className="text-sm">{order.email}</span>
-                              </td>
-                              <td className="p-2">
-                                <span className="font-medium">
-                                  ${order.total.toLocaleString()}
-                                </span>
-                              </td>
-                              <td className="p-2">
-                                <div className="flex items-center gap-2">
-                                  {getStatusIcon(order.status)}
-                                  <Badge variant={getStatusBadgeVariant(order.status)}>
-                                    {getStatusText(order.status)}
-                                  </Badge>
-                                </div>
-                              </td>
-                              <td className="p-2">
-                                <span className="text-sm">{order.date}</span>
-                              </td>
-                              <td className="p-2">
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {orders.length === 0 && (
-                      <div className="text-center py-8">
-                        <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-500">No hay órdenes registradas</p>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base">
+                          Órdenes recientes
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {totalOrders} órdenes en total — Hacé click en una
+                          orden para ver el detalle
+                        </p>
                       </div>
-                    )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-0 pb-0">
+                    <OrdersTableClient orders={orders} />
                   </CardContent>
                 </Card>
               </div>

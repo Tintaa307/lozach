@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,7 @@ export default function CheckoutClient({
   const { cartItems, subtotal } = useCart()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const isSubmittingRef = useRef(false)
 
   const [metodoEnvio, setMetodoEnvio] = useState("home")
   const [saveInfo, setSaveInfo] = useState(false)
@@ -96,6 +97,10 @@ export default function CheckoutClient({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Anti-double-click: prevent multiple simultaneous submissions
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
     setIsLoading(true)
 
     try {
@@ -150,6 +155,7 @@ export default function CheckoutClient({
       }
     } finally {
       setIsLoading(false)
+      isSubmittingRef.current = false
     }
   }
 

@@ -36,7 +36,7 @@ export interface CreateProductValues {
 export interface UpdateProductValues {
   name?: string
   stock?: string
-  description?: string
+  description?: string | null
   category?: CategoryType
   color?: string[]
   fabric?: string
@@ -44,7 +44,7 @@ export interface UpdateProductValues {
   size?: {
     talles: string[]
   }
-  image_url?: string
+  image_url?: string | null
   images_urls?: string[]
 }
 

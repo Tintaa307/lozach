@@ -24,6 +24,7 @@ import {
 } from "@/exceptions/order-items/order-items-exceptions"
 import { ShippingService } from "../shipping/shipping-service"
 import { OrderNotFoundException } from "@/exceptions/orders/orders-exceptions"
+import { Order } from "@/types/order/order"
 import { EmailService } from "../email/email-service"
 import { ShippingFetchException } from "@/exceptions/shipping/shipping-exceptions"
 import { Product } from "@/types/types"
@@ -149,15 +150,19 @@ export class PaymentService {
       .substring(2, 15)}`
 
     try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || ""
+      const isHttps = appUrl.startsWith("https://")
+
       const result = (await this.client.create({
         body: {
           items: items,
           back_urls: {
-            success: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
-            failure: `${process.env.NEXT_PUBLIC_APP_URL}/payment/failure`,
-            pending: `${process.env.NEXT_PUBLIC_APP_URL}/payment/pending`,
+            success: `${appUrl}/payment/success`,
+            failure: `${appUrl}/payment/failure`,
+            pending: `${appUrl}/payment/pending`,
           },
-          auto_return: "approved",
+          // auto_return only works with HTTPS — omit on localhost/HTTP to avoid MP errors
+          ...(isHttps ? { auto_return: "approved" } : {}),
           external_reference: request_id,
           metadata: {
             request_id,
@@ -224,11 +229,11 @@ export class PaymentService {
       await shippingService.createShipping({
         address,
         details,
-        postal_code,
+        postal_code: Number(postal_code),
         city,
         state,
         phone,
-        identifier,
+        identifier: Number(identifier),
         order_id: order.id,
         user_id: user.id,
         shipping_method,
@@ -298,55 +303,6 @@ export class PaymentService {
       }
     }
 
-    if (alreadyApproved && !order.email_sent) {
-      const orderItems = await orderItemsService.getOrderItemsByOrderId(
-        order.id
-      )
-
-      if (!orderItems) {
-        throw new OrderItemsFetchException(
-          "Items de la orden no encontrados",
-          "Items de la orden no encontrados"
-        )
-      }
-
-      const buyedProducts = [] as Product[]
-
-      for (const item of orderItems) {
-        const product = await productService.getProductById(item.product_id)
-        if (product) {
-          buyedProducts.push(product)
-        }
-      }
-
-      const shipping = await shippingService.getShippingByOrderId(order.id)
-
-      if (!shipping) {
-        throw new ShippingFetchException(
-          "Envío no encontrado",
-          "Envío no encontrado"
-        )
-      }
-
-      const user = await userService.getUserById(order.user_id)
-
-      if (!user) {
-        throw new AuthMissingUserException(
-          "Email no encontrado",
-          "Email no encontrado"
-        )
-      }
-
-      await emailService.sendOrderConfirmationEmail({
-        email: user.email,
-        name: user.name,
-        buyedProducts,
-        orderItems,
-        order,
-        shipping,
-      })
-    }
-
     if (!alreadyApproved && collection_status === "approved") {
       await orderService.updateOrder(order.id, {
         collection_status: collection_status,
@@ -363,60 +319,67 @@ export class PaymentService {
         updated_at: new Date().toISOString(),
       })
 
-      if (order.email_sent) {
-        return
-      }
-
-      const orderItems = await orderItemsService.getOrderItemsByOrderId(
-        order.id
-      )
-
-      if (!orderItems) {
-        throw new OrderItemsFetchException(
-          "Items de la orden no encontrados",
-          "Items de la orden no encontrados"
-        )
-      }
-
-      const buyedProducts = [] as Product[]
-
-      for (const item of orderItems) {
-        const product = await productService.getProductById(item.product_id)
-        if (product) {
-          buyedProducts.push(product)
-        }
-      }
-
-      const shipping = await shippingService.getShippingByOrderId(order.id)
-
-      if (!shipping) {
-        throw new ShippingFetchException(
-          "Envío no encontrado",
-          "Envío no encontrado"
-        )
-      }
-
-      const user = await userService.getUserById(order.user_id)
-
-      if (!user) {
-        throw new AuthMissingUserException(
-          "Email no encontrado",
-          "Email no encontrado"
-        )
-      }
-
-      await emailService.sendOrderConfirmationEmail({
-        email: user.email,
-        name: user.name,
-        buyedProducts,
-        orderItems,
-        order,
-        shipping,
-      })
-
       // TODO: Remove stock from products
     }
 
+    // Send confirmation email if approved and not already sent
+    const shouldSendEmail =
+      (alreadyApproved || collection_status === "approved") &&
+      !order.email_sent
+
+    if (shouldSendEmail) {
+      await this.sendOrderConfirmationEmail(order)
+    }
+
     return
+  }
+
+  private async sendOrderConfirmationEmail(order: Order): Promise<void> {
+    const orderItems = await orderItemsService.getOrderItemsByOrderId(
+      order.id
+    )
+
+    if (!orderItems) {
+      throw new OrderItemsFetchException(
+        "Items de la orden no encontrados",
+        "Items de la orden no encontrados"
+      )
+    }
+
+    const buyedProducts = [] as Product[]
+
+    for (const item of orderItems) {
+      const product = await productService.getProductById(item.product_id)
+      if (product) {
+        buyedProducts.push(product)
+      }
+    }
+
+    const shipping = await shippingService.getShippingByOrderId(order.id)
+
+    if (!shipping) {
+      throw new ShippingFetchException(
+        "Envío no encontrado",
+        "Envío no encontrado"
+      )
+    }
+
+    const user = await userService.getUserById(order.user_id)
+
+    if (!user) {
+      throw new AuthMissingUserException(
+        "Email no encontrado",
+        "Email no encontrado"
+      )
+    }
+
+    await emailService.sendOrderConfirmationEmail({
+      email: user.email,
+      name: user.name,
+      buyedProducts,
+      orderItems,
+      order,
+      shipping,
+    })
   }
 }

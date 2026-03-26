@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +8,9 @@ import { Package, Plus, Edit, Eye } from "lucide-react"
 import Link from "next/link"
 import DeleteProductButton from "@/components/admin/DeleteProductButton"
 import { ProductSearchBar } from "@/components/dashboard/ProductSearchBar"
-import { Product } from "@/types/products/types"
+import { Product, CategoryType } from "@/types/products/types"
+
+type CategoryFilter = "all" | CategoryType
 
 interface DashboardClientProps {
   allProducts: Product[]
@@ -21,9 +23,15 @@ export function DashboardClient({
   currentPage,
   itemsPerPage,
 }: DashboardClientProps) {
-  const [filteredProducts, setFilteredProducts] =
+  const [searchFilteredProducts, setSearchFilteredProducts] =
     useState<Product[]>(allProducts)
   const [searchTerm, setSearchTerm] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all")
+
+  const filteredProducts = useMemo(() => {
+    if (categoryFilter === "all") return searchFilteredProducts
+    return searchFilteredProducts.filter((p) => p.category === categoryFilter)
+  }, [searchFilteredProducts, categoryFilter])
 
   // Calcular paginación basada en productos filtrados
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
@@ -31,13 +39,14 @@ export function DashboardClient({
   const endIndex = startIndex + itemsPerPage
   const products = filteredProducts.slice(startIndex, endIndex)
 
-  // Resetear página cuando cambie la búsqueda
+  const hasActiveFilters = searchTerm || categoryFilter !== "all"
+
+  // Resetear página cuando cambie la búsqueda o categoría
   useEffect(() => {
-    if (searchTerm && currentPage > 1) {
-      // Redirigir a la primera página si hay búsqueda activa
+    if (hasActiveFilters && currentPage > 1) {
       window.history.replaceState({}, "", "/dashboard")
     }
-  }, [searchTerm, currentPage])
+  }, [searchTerm, categoryFilter, currentPage, hasActiveFilters])
 
   return (
     <div className="flex flex-col gap-4 py-6 px-6 w-full">
@@ -129,20 +138,65 @@ export function DashboardClient({
               <p className="text-sm text-muted-foreground">
                 Mostrando {products.length} de {filteredProducts.length}{" "}
                 productos
-                {searchTerm && (
+                {hasActiveFilters && (
                   <span className="text-blue-600">
-                    {" "}
-                    (filtrados por: &quot;{searchTerm}&quot;)
+                    {searchTerm && ` · búsqueda: "${searchTerm}"`}
+                    {categoryFilter !== "all" &&
+                      ` · categoría: ${categoryFilter === "adult" ? "Adulto" : "Niño"}`}
                   </span>
                 )}
               </p>
             </div>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground"
+                onClick={() => {
+                  setCategoryFilter("all")
+                  setSearchTerm("")
+                  setSearchFilteredProducts(allProducts)
+                }}
+              >
+                Limpiar filtros
+              </Button>
+            )}
           </div>
-          <ProductSearchBar
-            products={allProducts}
-            onFilteredProducts={setFilteredProducts}
-            onSearchTerm={setSearchTerm}
-          />
+
+          {/* Filtros */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-1">
+            <div className="flex-1">
+              <ProductSearchBar
+                products={allProducts}
+                onFilteredProducts={setSearchFilteredProducts}
+                onSearchTerm={setSearchTerm}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                Categoría:
+              </span>
+              <div className="flex gap-1">
+                {(
+                  [
+                    { value: "all", label: "Todos" },
+                    { value: "adult", label: "Adultos" },
+                    { value: "child", label: "Niños" },
+                  ] as { value: CategoryFilter; label: string }[]
+                ).map(({ value, label }) => (
+                  <Button
+                    key={value}
+                    variant={categoryFilter === value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCategoryFilter(value)}
+                    className="text-xs"
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {products.length > 0 ? (
@@ -214,11 +268,23 @@ export function DashboardClient({
             <div className="text-center py-8">
               <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-500">
-                {searchTerm
-                  ? `No se encontraron productos que coincidan con "${searchTerm}"`
+                {hasActiveFilters
+                  ? "No se encontraron productos con los filtros aplicados"
                   : "No hay productos creados"}
               </p>
-              {!searchTerm && (
+              {hasActiveFilters ? (
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setCategoryFilter("all")
+                    setSearchTerm("")
+                    setSearchFilteredProducts(allProducts)
+                  }}
+                >
+                  Limpiar filtros
+                </Button>
+              ) : (
                 <Link href="/dashboard/products">
                   <Button className="mt-4">Crear Primer Producto</Button>
                 </Link>

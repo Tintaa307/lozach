@@ -535,6 +535,12 @@ export default function CheckoutClient({
                         <p className="text-sm text-gray-500">
                           ${item.price.toLocaleString()}
                         </p>
+                        <p className="text-sm text-gray-500">
+                          Color: {item.color}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Talle: {item.size}
+                        </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">

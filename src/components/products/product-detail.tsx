@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Heart, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -24,11 +24,17 @@ interface ProductDetailProps {
 
 export default function ProductDetail({ product }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1)
-  const [selectedSize, setSelectedSize] = useState("")
-  const [selectedColor, setSelectedColor] = useState("")
+  const [selectedSize, setSelectedSize] = useState(product.size?.talles?.[0] ?? "")
+  const [selectedColor, setSelectedColor] = useState(product.color?.[0] ?? "")
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const [isFavorite, setIsFavorite] = useState(false)
+
+  useEffect(() => {
+    setSelectedSize(product.size?.talles?.[0] ?? "")
+    setSelectedColor(product.color?.[0] ?? "")
+    setCurrentImageIndex(0)
+  }, [product.id, product.size, product.color])
 
   // Crear array de todas las imágenes disponibles
   const allImages = [
@@ -204,7 +210,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </Label>
           <Select
             onValueChange={(value) => setSelectedSize(value)}
-            defaultValue={product.size?.talles?.[0]}
             value={selectedSize}
           >
             <SelectTrigger className="h-10 md:h-11 cursor-pointer">
@@ -230,7 +235,6 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </Label>
           <Select
             onValueChange={(value) => setSelectedColor(value)}
-            defaultValue={product.color?.[0]}
             value={selectedColor}
           >
             <SelectTrigger className="h-10 md:h-11 cursor-pointer">

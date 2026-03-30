@@ -177,55 +177,47 @@ export default function OrderConfirmationEmail({
               Artículos Pedidos
             </Heading>
 
-            {buyedProducts.map((product, index) => (
-              <div key={product.id}>
-                {index > 0 && <Hr style={productDivider} />}
-                <Row style={productRow}>
-                  <Column style={productImageColumn}>
-                    {product.image_url ? (
-                      <Img
-                        src={product.image_url}
-                        alt={product.name}
-                        width="80"
-                        height="80"
-                        style={productImage}
-                      />
-                    ) : (
-                      <div style={productImagePlaceholder}>
-                        <Text style={placeholderText}>Sin imagen</Text>
-                      </div>
-                    )}
-                  </Column>
-                  <Column style={productDetailsColumn}>
-                    <Text style={productName}>{product.name}</Text>
-                    <Text style={productDetail}>
-                      Color:{" "}
-                      {
-                        orderItems.find(
-                          (item) => item.product_id === product.id
-                        )?.color
-                      }
-                    </Text>
-                    <Text style={productDetail}>Tela: {product.fabric}</Text>
-                    <Text style={productDetail}>
-                      Talle:{" "}
-                      {
-                        orderItems.find(
-                          (item) => item.product_id === product.id
-                        )?.size
-                      }
-                    </Text>
-                    <Text style={productDetail}>SKU: {product.sku}</Text>
-                  </Column>
-                  <Column style={productPriceColumn} align="right">
-                    <Text style={productPrice}>
-                      {formatMoney(product.price, order.currency)}
-                    </Text>
-                    <Text style={productQuantity}>Cant: 1</Text>
-                  </Column>
-                </Row>
-              </div>
-            ))}
+            {orderItems.map((item, index) => {
+              const product = buyedProducts[index]
+
+              return (
+                <div key={item.id}>
+                  {index > 0 && <Hr style={productDivider} />}
+                  <Row style={productRow}>
+                    <Column style={productImageColumn}>
+                      {product?.image_url ? (
+                        <Img
+                          src={product.image_url}
+                          alt={item.product_name}
+                          width="80"
+                          height="80"
+                          style={productImage}
+                        />
+                      ) : (
+                        <div style={productImagePlaceholder}>
+                          <Text style={placeholderText}>Sin imagen</Text>
+                        </div>
+                      )}
+                    </Column>
+                    <Column style={productDetailsColumn}>
+                      <Text style={productName}>{item.product_name}</Text>
+                      <Text style={productDetail}>Color: {item.color}</Text>
+                      <Text style={productDetail}>
+                        Tela: {product?.fabric || "N/A"}
+                      </Text>
+                      <Text style={productDetail}>Talle: {item.size}</Text>
+                      <Text style={productDetail}>SKU: {item.sku}</Text>
+                    </Column>
+                    <Column style={productPriceColumn} align="right">
+                      <Text style={productPrice}>
+                        {formatMoney(item.unit_price, order.currency)}
+                      </Text>
+                      <Text style={productQuantity}>Cant: {item.quantity}</Text>
+                    </Column>
+                  </Row>
+                </div>
+              )
+            })}
           </Section>
 
           {/* Shipping Information */}

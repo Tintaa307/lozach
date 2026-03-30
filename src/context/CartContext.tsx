@@ -23,7 +23,7 @@ interface CartContextType {
   cartItems: CartItem[]
   addItem: (item: CartItem) => void
   removeItem: (id: number, size?: string, color?: string) => void
-  updateQuantity: (id: number, change: number) => void
+  updateQuantity: (id: number, change: number, size?: string, color?: string) => void
   clearCart: () => void
   subtotal: number
   isInitialized: boolean
@@ -32,6 +32,15 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 const CART_STORAGE_KEY = "lozach-cart"
+const isSameVariant = (
+  item: CartItem,
+  id: number,
+  size?: string,
+  color?: string
+) =>
+  item.id === id &&
+  (size ? item.size === size : true) &&
+  (color ? item.color === color : true)
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
@@ -71,7 +80,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     setCartItems((prevItems) => {
       const existingIndex = prevItems.findIndex(
-        (item) => item.id === newItem.id && item.size === newItem.size
+        (item) =>
+          item.id === newItem.id &&
+          item.size === newItem.size &&
+          item.color === newItem.color
       )
       if (existingIndex >= 0) {
         const updatedItems = [...prevItems]
@@ -115,12 +127,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     )
   }
 
-  const updateQuantity = (id: number, change: number) => {
+  const updateQuantity = (
+    id: number,
+    change: number,
+    size?: string,
+    color?: string
+  ) => {
     setCartItems(
       (prevItems) =>
         prevItems
           .map((item) => {
-            if (item.id === id) {
+            if (isSameVariant(item, id, size, color)) {
               const newQuantity = Math.max(0, item.quantity + change)
               return newQuantity === 0
                 ? null

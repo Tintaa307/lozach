@@ -5,9 +5,14 @@ import OrderConfirmationEmail from "@/components/email-templates/buy-template"
 
 export class EmailService {
   private readonly resend: Resend
+  private readonly adminNotificationEmail: string
 
   constructor() {
     this.resend = new Resend(process.env.RESEND_API_KEY)
+    this.adminNotificationEmail =
+      process.env.ADMIN_NOTIFICATION_EMAIL ||
+      process.env.ORDER_NOTIFICATION_EMAIL ||
+      "lozacharg@gmail.com"
   }
 
   async sendOrderConfirmationEmail(emailBody: EmailBody): Promise<void> {
@@ -16,7 +21,12 @@ export class EmailService {
 
     const { error } = await this.resend.emails.send({
       from: "Lozach <compras@lozachurban.store>",
-      to: email, // lozacharg@gmail.com
+      to: email,
+      bcc:
+        this.adminNotificationEmail &&
+        this.adminNotificationEmail !== email
+          ? this.adminNotificationEmail
+          : undefined,
       subject: "¡Tu compra en Lozach ha sido realizada con éxito!",
       react: OrderConfirmationEmail({
         email,

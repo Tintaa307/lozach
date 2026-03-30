@@ -73,7 +73,10 @@ export function CartSheet() {
             <ScrollArea className="flex-1 -mx-6 px-6">
               <div className="space-y-4">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4">
+                  <div
+                    key={`${item.id}-${item.size}-${item.color}`}
+                    className="flex items-center space-x-4"
+                  >
                     <div className="relative aspect-square h-16 w-16 min-w-fit overflow-hidden rounded">
                       <Image
                         src={item.image_url || "/example-image.jpg"}
@@ -87,6 +90,9 @@ export function CartSheet() {
                       <span className="text-sm text-gray-500">
                         Talle: {item.size}
                       </span>
+                      <span className="text-sm text-gray-500">
+                        Color: {item.color}
+                      </span>
                       <span className="text-sm font-medium">${item.price}</span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -94,7 +100,9 @@ export function CartSheet() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() =>
+                          updateQuantity(item.id, -1, item.size, item.color)
+                        }
                       >
                         <Minus className="h-3 w-3" />
                         <span className="sr-only">Decrease quantity</span>
@@ -104,7 +112,9 @@ export function CartSheet() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, 1, item.size, item.color)
+                        }
                       >
                         <Plus className="h-3 w-3" />
                         <span className="sr-only">Increase quantity</span>
@@ -113,7 +123,9 @@ export function CartSheet() {
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => removeItem(item.id)}
+                        onClick={() =>
+                          removeItem(item.id, item.size, item.color)
+                        }
                       >
                         <X className="h-3 w-3" />
                         <span className="sr-only">Remove item</span>

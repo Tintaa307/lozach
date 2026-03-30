@@ -26,10 +26,17 @@ export function MiniCardManager({
   const [newItem, setNewItem] = useState("")
 
   const handleAdd = () => {
-    if (newItem.trim()) {
-      onAdd(newItem.trim())
-      setNewItem("")
+    const nextItems = newItem
+      .split(/[,\n;|]+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+    if (nextItems.length === 0) {
+      return
     }
+
+    nextItems.forEach((item) => onAdd(item))
+    setNewItem("")
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

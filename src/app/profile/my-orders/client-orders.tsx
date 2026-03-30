@@ -291,7 +291,7 @@ export default function MyOrdersSection({ orders }: Props) {
                                 <p>Color: {orderItem.color}</p>
                                 <p>Tela: {product.fabric || "N/A"}</p>
                                 <p>Talle: {orderItem.size}</p>
-                                <p>SKU: {product.sku}</p>
+                                <p>SKU: {orderItem.sku}</p>
                               </div>
                             </div>
                           </div>

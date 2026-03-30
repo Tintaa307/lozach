@@ -17,6 +17,71 @@ import { ValidationException } from "@/exceptions/base/base-exceptions"
 import { CreateProductSchema } from "@/lib/validations/product-schema"
 
 export class ProductRepository {
+  private normalizeStringArray(value: unknown): string[] {
+    if (Array.isArray(value)) {
+      return value
+        .flatMap((entry) => this.normalizeStringArray(entry))
+        .filter(Boolean)
+    }
+
+    if (typeof value === "string") {
+      const trimmedValue = value.trim()
+
+      if (!trimmedValue) {
+        return []
+      }
+
+      if (
+        (trimmedValue.startsWith("[") && trimmedValue.endsWith("]")) ||
+        (trimmedValue.startsWith("{") && trimmedValue.endsWith("}"))
+      ) {
+        try {
+          const parsedValue = JSON.parse(trimmedValue) as unknown
+
+          if (
+            parsedValue &&
+            typeof parsedValue === "object" &&
+            "talles" in parsedValue
+          ) {
+            return this.normalizeStringArray(
+              (parsedValue as { talles: unknown }).talles
+            )
+          }
+
+          return this.normalizeStringArray(parsedValue)
+        } catch {
+          // Ignore JSON parsing failures and fall back to delimiter-based parsing.
+        }
+      }
+
+      return trimmedValue
+        .split(/[,\n;|]+/)
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+    }
+
+    return []
+  }
+
+  private normalizeProduct(product: Partial<Product> & { size?: unknown }): Product {
+    const rawSize = product.size
+    const talles =
+      rawSize && typeof rawSize === "object" && "talles" in rawSize
+        ? this.normalizeStringArray((rawSize as { talles?: unknown }).talles)
+        : this.normalizeStringArray(rawSize)
+
+    return {
+      ...(product as Product),
+      color: this.normalizeStringArray(product.color),
+      size: { talles },
+      images_urls: Array.isArray(product.images_urls)
+        ? product.images_urls.filter(
+            (imageUrl): imageUrl is string => typeof imageUrl === "string"
+          )
+        : [],
+    }
+  }
+
   async getAllProducts(filters?: ProductFilters): Promise<Product[]> {
     const supabase = await createClient()
 
@@ -60,7 +125,7 @@ export class ProductRepository {
         return []
       }
 
-      return data as Product[]
+      return data.map((product) => this.normalizeProduct(product))
     } catch (error) {
       if (error instanceof ProductFetchException) {
         throw error
@@ -104,7 +169,7 @@ export class ProductRepository {
         )
       }
 
-      return data as Product
+      return this.normalizeProduct(data)
     } catch (error) {
       if (
         error instanceof ProductNotFoundException ||
@@ -147,7 +212,7 @@ export class ProductRepository {
         return []
       }
 
-      return data as Product[]
+      return data.map((product) => this.normalizeProduct(product))
     } catch (error) {
       if (
         error instanceof ProductFetchException ||
@@ -191,7 +256,7 @@ export class ProductRepository {
         return []
       }
 
-      return data as Product[]
+      return data.map((product) => this.normalizeProduct(product))
     } catch (error) {
       if (
         error instanceof ProductFetchException ||
@@ -259,7 +324,7 @@ export class ProductRepository {
       )
     }
 
-    return data as Product
+    return this.normalizeProduct(data)
   }
 
   async updateProduct(
@@ -292,7 +357,7 @@ export class ProductRepository {
       )
     }
 
-    return data as Product
+    return this.normalizeProduct(data)
   }
 
   async deleteProduct(id: number): Promise<void> {
@@ -349,7 +414,7 @@ export class ProductRepository {
         )
       }
 
-      return (data as Product[]) || []
+      return (data || []).map((product) => this.normalizeProduct(product))
     } catch (error) {
       if (error instanceof ProductFetchException) {
         throw error

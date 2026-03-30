@@ -67,7 +67,7 @@ export default function PaymentPendingClient() {
                 <p className="text-xs text-gray-500">
                   ¿Tienes alguna pregunta?{" "}
                   <a
-                    href="mailto:support@lozachurban.store"
+                    href="mailto:lozacharg@gmail.com"
                     className="text-black hover:underline"
                   >
                     Contáctanos

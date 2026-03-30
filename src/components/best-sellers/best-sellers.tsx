@@ -6,7 +6,6 @@ import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 import { getProductsByNamesClientAction } from "@/controllers/products/product-client-controller"
 
 interface Product {
@@ -21,8 +20,6 @@ export default function BestSellers() {
   const [currentPage, setCurrentPage] = useState(1)
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
-
   const products_names = [
     "Buzo canguro frisa estampado",
     "Cargos jean rectos",
@@ -98,10 +95,10 @@ export default function BestSellers() {
             ))
           : // Actual products
             visibleProducts.map((product) => (
-              <div
-                onClick={() => router.push(`/products/${product.id}`)}
+              <Link
+                href={`/products/${product.id}`}
                 key={product.id}
-                className="group"
+                className="group block"
               >
                 <div className="relative aspect-3/2 bg-gray-100 mb-2 overflow-hidden">
                   <Image
@@ -110,9 +107,6 @@ export default function BestSellers() {
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <Link href="#" className="absolute inset-0">
-                    <span className="sr-only">Ver producto</span>
-                  </Link>
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-medium">{product.name}</h3>
@@ -128,7 +122,7 @@ export default function BestSellers() {
                       : product.price.toFixed(0)}
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
       </div>
 

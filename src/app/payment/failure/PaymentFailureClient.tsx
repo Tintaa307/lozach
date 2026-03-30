@@ -64,7 +64,7 @@ export default function PaymentFailureClient() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full">
-                  <Link href="/cart">
+                  <Link href="/checkout">
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Ver Mi Carrito
                   </Link>
@@ -81,7 +81,7 @@ export default function PaymentFailureClient() {
                 <p className="text-xs text-gray-500">
                   ¿Necesitas ayuda?{" "}
                   <a
-                    href="mailto:support@lozachurban.store"
+                    href="mailto:lozacharg@gmail.com"
                     className="text-black hover:underline"
                   >
                     Contáctanos

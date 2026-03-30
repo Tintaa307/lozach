@@ -37,6 +37,8 @@ export default function NavbarClient({ user }: NavbarClientProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearchResults, setShowSearchResults] = useState(false)
   const pathname = usePathname()
+  const mapsLocationUrl =
+    "https://www.google.com/maps/search/?api=1&query=Argerich+562,+C1407,+Buenos+Aires,+Argentina"
 
   const router = useRouter()
 
@@ -105,23 +107,14 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                   />
                 </Button>
               </div>
-              <div
-                className="relative"
-                onMouseEnter={() => handleMouseEnter("ubicacion")}
+              <Link
+                href={mapsLocationUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center text-sm font-medium"
               >
-                <Button
-                  variant="ghost"
-                  className="flex items-center text-sm font-medium p-0 h-auto hover:bg-transparent"
-                >
-                  UBICACIÓN{" "}
-                  <ChevronDown
-                    className={cn(
-                      "ml-1 h-4 w-4 transition-transform duration-200",
-                      activeDropdown === "ubicacion" && "rotate-180"
-                    )}
-                  />
-                </Button>
-              </div>
+                UBICACIÓN
+              </Link>
             </div>
 
             {/* Logo - centered on desktop, left-aligned on mobile */}
@@ -263,7 +256,9 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                 <span className="text-sm">ARGERICH 562</span>
               </div>
               <Link
-                href="/#footer"
+                href={mapsLocationUrl}
+                target="_blank"
+                rel="noreferrer"
                 className="text-sm text-gray-500 pl-8"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -366,31 +361,6 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                 <Link href="/products">VER TODO</Link>
               </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Ubicacion Dropdown - Desktop only */}
-        <div
-          className={cn(
-            "absolute left-0 right-0 bg-gray-50 text-black px-6 py-3 z-50 transform transition-all duration-300 ease-in-out hidden md:block",
-            activeDropdown === "ubicacion"
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 -translate-y-2 pointer-events-none"
-          )}
-          onMouseEnter={() => handleMouseEnter("ubicacion")}
-          onMouseLeave={handleMouseLeave}
-        >
-          <div className="flex items-center justify-center">
-            <MapPin className="h-5 w-5 mr-2" />
-            <span className="font-medium">ARGERICH 562</span>
-            <Link href={"/#footer"}>
-              <Button
-                variant="link"
-                className="ml-2 text-sm text-muted-foreground p-0 h-auto"
-              >
-                Ver ubicación
-              </Button>
-            </Link>
           </div>
         </div>
 

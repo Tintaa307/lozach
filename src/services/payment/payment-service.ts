@@ -329,6 +329,11 @@ export class PaymentService {
 
     if (shouldSendEmail) {
       await this.sendOrderConfirmationEmail(order)
+
+      await orderService.updateOrder(order.id, {
+        email_sent: true,
+        updated_at: new Date().toISOString(),
+      })
     }
 
     return

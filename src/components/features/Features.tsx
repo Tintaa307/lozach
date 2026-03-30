@@ -104,7 +104,7 @@ export default function Features() {
                   fill
                   className="object-cover"
                 />
-                <Link href="#" className="absolute inset-0">
+                <Link href="/products" className="absolute inset-0">
                   <span className="sr-only">Ver producto</span>
                 </Link>
               </div>
@@ -142,7 +142,7 @@ export default function Features() {
       {/* Pagination */}
       <div className="flex justify-center items-center mt-8 gap-4">
         <Button variant={"default"} className="h-11">
-          <Link href="#" className="">
+          <Link href="/products" className="">
             VER TODO
           </Link>
         </Button>

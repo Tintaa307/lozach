@@ -28,6 +28,8 @@ import { Order } from "@/types/order/order"
 import { EmailService } from "../email/email-service"
 import { ShippingFetchException } from "@/exceptions/shipping/shipping-exceptions"
 import { Product } from "@/types/types"
+import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
+import { CreateShippingValues } from "@/types/shipping/shipping"
 
 const userService = new AuthService()
 const productService = new ProductService()
@@ -149,6 +151,8 @@ export class PaymentService {
       .toString(36)
       .substring(2, 15)}`
 
+    let createdOrderId: string | null = null
+
     try {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || ""
       const isHttps = appUrl.startsWith("https://")
@@ -190,16 +194,17 @@ export class PaymentService {
         phone: phone,
         expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
       })
+      createdOrderId = order.id
 
       if (save_info) {
         await addressesService.createAddress({
           address,
           details,
-          postal_code,
+          postal_code: Number(postal_code),
           city,
           state,
           phone,
-          identifier,
+          identifier: Number(identifier),
           order_id: order.id,
           user_id: user.id,
         })
@@ -226,7 +231,7 @@ export class PaymentService {
         }
       }
 
-      await shippingService.createShipping({
+      const shippingPayload: CreateShippingValues = {
         address,
         details,
         postal_code: Number(postal_code),
@@ -240,12 +245,44 @@ export class PaymentService {
         shipping_cost: shippingCostNumber,
         shipping_status: "draft",
         provider: "CA",
-      })
+      }
+
+      await shippingService.createShipping(shippingPayload)
+
+      try {
+        const user = await userService.getUserById(order.user_id)
+        await emailService.sendAdminOrderNotificationEmail({
+          customerName: user.name,
+          customerEmail: user.email,
+          order,
+          orderItems: order_items.map((item) => ({
+            id: crypto.randomUUID(),
+            order_id: order.id,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            sku: item.sku,
+            currency: "ARS",
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            color: item.color,
+            size: item.size,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })),
+          shipping: shippingPayload,
+        })
+      } catch (error) {
+        console.error("Error sending admin order notification:", error)
+      }
 
       return {
         init_point: result.init_point,
       }
     } catch (error) {
+      if (createdOrderId) {
+        await this.cleanupFailedOrderCreation(createdOrderId)
+      }
+
       console.error(error)
       throw new PaymentCreationException(
         (error as Error).message,
@@ -386,5 +423,27 @@ export class PaymentService {
       order,
       shipping,
     })
+  }
+
+  private async cleanupFailedOrderCreation(orderId: string): Promise<void> {
+    const supabase = createAdminClient()
+
+    const cleanups = [
+      supabase.from("addresses").delete().eq("order_id", orderId),
+      supabase.from("order_items").delete().eq("order_id", orderId),
+      supabase.from("shipping").delete().eq("order_id", orderId),
+    ]
+
+    for (const cleanup of cleanups) {
+      const { error } = await cleanup
+      if (error) {
+        console.error("Error cleaning up order resources:", orderId, error)
+      }
+    }
+
+    const { error } = await supabase.from("orders").delete().eq("id", orderId)
+    if (error) {
+      console.error("Error cleaning up order:", orderId, error)
+    }
   }
 }

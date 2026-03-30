@@ -1,7 +1,9 @@
 import { OrderItem } from "@/types/order-items/order-items"
+import { Shipping } from "@/types/shipping/shipping"
 
 export interface OrderWithItems extends Order {
   order_items: OrderItem[]
+  shipping?: Shipping[]
 }
 
 export interface Order {

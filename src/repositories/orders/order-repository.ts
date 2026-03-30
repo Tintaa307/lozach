@@ -80,7 +80,7 @@ export class OrderRepository {
 
     const { data, error } = await supabase
       .from("orders")
-      .select("*, order_items(*)")
+      .select("*, order_items(*), shipping(*)")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -100,7 +100,6 @@ export class OrderRepository {
       .from("orders")
       .select("*")
       .eq("user_id", userId)
-      .in("collection_status", ["approved", "cancelled"])
       .order("created_at", { ascending: false })
 
     if (error) {

@@ -12,10 +12,9 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const body = await req.json()
 
-    // Validate required fields — still return 200 to prevent MP retries
     if (!body.data?.id || !body.type) {
       console.error("Invalid webhook payload:", body)
-      return new Response("OK", { status: 200 })
+      return new Response("Invalid webhook payload", { status: 400 })
     }
 
     const payment_id = body.data.id as string
@@ -34,7 +33,7 @@ export async function POST(req: Request): Promise<Response> {
 
     if (!paymentDetails) {
       console.error("Payment not found for id:", payment_id)
-      return new Response("OK", { status: 200 })
+      return new Response("Payment not found", { status: 500 })
     }
 
     if (topic.includes("payment") && payment_id) {
@@ -51,9 +50,7 @@ export async function POST(req: Request): Promise<Response> {
 
     return new Response("OK", { status: 200 })
   } catch (error) {
-    // Always return 200 to prevent MercadoPago from retrying infinitely.
-    // Errors are logged for debugging but the webhook is acknowledged.
     console.error("Webhook processing error:", error)
-    return new Response("OK", { status: 200 })
+    return new Response("Webhook processing error", { status: 500 })
   }
 }

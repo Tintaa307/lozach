@@ -36,10 +36,10 @@ export default function CheckoutClient({
   )
 
   const [formData, setFormData] = useState({
-    identifier: address?.identifier || "",
+    identifier: address ? String(address.identifier) : "",
     address: address?.address || "",
     details: address?.details || "",
-    postal_code: address?.postal_code || "",
+    postal_code: address ? String(address.postal_code) : "",
     city: address?.city || "",
     state: address?.state || "",
     phone: address?.phone || "",
@@ -66,10 +66,10 @@ export default function CheckoutClient({
   const handleUseSavedAddress = () => {
     if (address) {
       setFormData({
-        identifier: address.identifier,
+        identifier: String(address.identifier),
         address: address.address,
         details: address.details,
-        postal_code: address.postal_code,
+        postal_code: String(address.postal_code),
         city: address.city,
         state: address.state,
         phone: address.phone,

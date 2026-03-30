@@ -151,6 +151,9 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
           const status = getStatus(order.collection_status || "pending")
           const isExpanded = expandedOrderId === order.id
           const itemCount = order.order_items?.length || 0
+          const shipping = Array.isArray(order.shipping)
+            ? order.shipping[0]
+            : undefined
 
           return (
             <>
@@ -303,6 +306,32 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
                                 <span>Total</span>
                                 <span className="tabular-nums">
                                   {formatCurrency(order.total_amount)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-8 pt-2">
+                                <span className="text-muted-foreground">
+                                  Email cliente
+                                </span>
+                                <span>
+                                  {order.email_sent ? "Enviado" : "Pendiente"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-8">
+                                <span className="text-muted-foreground">
+                                  Procesada
+                                </span>
+                                <span>
+                                  {order.processed_at
+                                    ? formatDate(order.processed_at)
+                                    : "No"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-8">
+                                <span className="text-muted-foreground">
+                                  Estado envío
+                                </span>
+                                <span>
+                                  {shipping?.shipping_status || "Sin registro"}
                                 </span>
                               </div>
                             </div>

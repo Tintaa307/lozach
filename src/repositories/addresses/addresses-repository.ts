@@ -1,14 +1,14 @@
 import {
   AddressCreationException,
   AddressFetchException,
-  AddressNotFoundException,
 } from "@/exceptions/addresses/addresses-exceptions"
 import { createClient } from "@/lib/supabase/server"
+import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
 import { Address, CreateAddressValues } from "@/types/address/address"
 
 export class AddressesRepository {
   async createAddress(address: CreateAddressValues): Promise<void> {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { error } = await supabase.from("addresses").insert(address)
 
@@ -22,14 +22,16 @@ export class AddressesRepository {
     return
   }
 
-  async getAddress(userId: string): Promise<Address> {
+  async getAddress(userId: string): Promise<Address | null> {
     const supabase = await createClient()
 
     const { data, error } = await supabase
       .from("addresses")
       .select("*")
       .eq("user_id", userId)
-      .single()
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (error) {
       throw new AddressFetchException(
@@ -38,13 +40,6 @@ export class AddressesRepository {
       )
     }
 
-    if (!data) {
-      throw new AddressNotFoundException(
-        "Dirección no encontrada",
-        "Dirección no encontrada"
-      )
-    }
-
-    return data as Address
+    return (data as Address | null) ?? null
   }
 }

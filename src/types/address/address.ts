@@ -6,11 +6,11 @@ export interface Address {
   user_id: string
   address: string
   details: string
-  postal_code: string
+  postal_code: number
   city: string
   state: string
   phone: string
-  identifier: string
+  identifier: number
 }
 
 export interface CreateAddressValues {
@@ -18,9 +18,9 @@ export interface CreateAddressValues {
   user_id: string
   address: string
   details: string
-  postal_code: string
+  postal_code: number
   city: string
   state: string
   phone: string
-  identifier: string
+  identifier: number
 }

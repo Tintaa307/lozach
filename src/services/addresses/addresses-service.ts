@@ -12,7 +12,7 @@ export class AddressesService {
     return await this.addressesRepository.createAddress(address)
   }
 
-  async getAddress(userId: string): Promise<Address> {
+  async getAddress(userId: string): Promise<Address | null> {
     return await this.addressesRepository.getAddress(userId)
   }
 }

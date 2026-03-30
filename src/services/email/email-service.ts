@@ -1,7 +1,8 @@
 import { EmailSendingException } from "@/exceptions/email/email-exceptions"
-import { EmailBody } from "@/types/email/email"
+import { AdminOrderNotificationBody, EmailBody } from "@/types/email/email"
 import { Resend } from "resend"
 import OrderConfirmationEmail from "@/components/email-templates/buy-template"
+import AdminOrderNotificationEmail from "@/components/email-templates/admin-order-template"
 
 export class EmailService {
   private readonly resend: Resend
@@ -22,11 +23,6 @@ export class EmailService {
     const { error } = await this.resend.emails.send({
       from: "Lozach <compras@lozachurban.store>",
       to: email,
-      bcc:
-        this.adminNotificationEmail &&
-        this.adminNotificationEmail !== email
-          ? this.adminNotificationEmail
-          : undefined,
       subject: "¡Tu compra en Lozach ha sido realizada con éxito!",
       react: OrderConfirmationEmail({
         email,
@@ -44,5 +40,21 @@ export class EmailService {
     }
 
     return
+  }
+
+  async sendAdminOrderNotificationEmail(
+    emailBody: AdminOrderNotificationBody
+  ): Promise<void> {
+    const { error } = await this.resend.emails.send({
+      from: "Lozach <compras@lozachurban.store>",
+      to: this.adminNotificationEmail,
+      subject: `Nueva orden recibida #${emailBody.order.id.slice(0, 8)}`,
+      react: AdminOrderNotificationEmail(emailBody),
+      text: "",
+    })
+
+    if (error) {
+      throw new EmailSendingException(error.message)
+    }
   }
 }

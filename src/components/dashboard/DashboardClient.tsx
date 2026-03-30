@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,12 +17,14 @@ interface DashboardClientProps {
   allProducts: Product[]
   currentPage: number
   itemsPerPage: number
+  basePath: string
 }
 
 export function DashboardClient({
   allProducts,
   currentPage,
   itemsPerPage,
+  basePath,
 }: DashboardClientProps) {
   const [searchFilteredProducts, setSearchFilteredProducts] =
     useState<Product[]>(allProducts)
@@ -44,17 +47,19 @@ export function DashboardClient({
   // Resetear página cuando cambie la búsqueda o categoría
   useEffect(() => {
     if (hasActiveFilters && currentPage > 1) {
-      window.history.replaceState({}, "", "/dashboard")
+      window.history.replaceState({}, "", basePath)
     }
-  }, [searchTerm, categoryFilter, currentPage, hasActiveFilters])
+  }, [basePath, searchTerm, categoryFilter, currentPage, hasActiveFilters])
 
   return (
     <div className="flex flex-col gap-4 py-6 px-6 w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestión de Productos</h1>
-          <p className="text-gray-600">Administra tu catálogo de productos</p>
+          <h1 className="text-3xl font-bold tracking-tight">Catálogo</h1>
+          <p className="text-gray-600">
+            Administra productos, variantes y contenido de la tienda
+          </p>
         </div>
         <Link href="/dashboard/products">
           <Button className="flex items-center gap-2">
@@ -121,9 +126,16 @@ export function DashboardClient({
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {
+                allProducts.filter(
+                  (p) =>
+                    !p.stock || p.stock.trim().toLowerCase() === "consultar"
+                ).length
+              }
+            </div>
             <p className="text-xs text-muted-foreground">
-              Unidades disponibles
+              Productos con stock a revisar
             </p>
           </CardContent>
         </Card>
@@ -204,10 +216,11 @@ export function DashboardClient({
               {products.map((product) => (
                 <Card key={product.id} className="overflow-hidden">
                   <div className="aspect-square relative">
-                    <img
+                    <Image
                       src={product.image_url || "/example-image.jpg"}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                     <div className="absolute top-2 right-2">
                       <Badge variant="secondary" className="text-xs">
@@ -301,10 +314,10 @@ export function DashboardClient({
                 disabled={currentPage === 1}
                 asChild
               >
-                <Link href={`/dashboard?page=${currentPage - 1}`}>
-                  Anterior
-                </Link>
-              </Button>
+                      <Link href={`${basePath}?page=${currentPage - 1}`}>
+                        Anterior
+                      </Link>
+                    </Button>
 
               <div className="flex items-center space-x-1">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
@@ -315,7 +328,7 @@ export function DashboardClient({
                       size="sm"
                       asChild
                     >
-                      <Link href={`/dashboard?page=${page}`}>{page}</Link>
+                      <Link href={`${basePath}?page=${page}`}>{page}</Link>
                     </Button>
                   )
                 )}
@@ -327,10 +340,10 @@ export function DashboardClient({
                 disabled={currentPage === totalPages}
                 asChild
               >
-                <Link href={`/dashboard?page=${currentPage + 1}`}>
-                  Siguiente
-                </Link>
-              </Button>
+                  <Link href={`${basePath}?page=${currentPage + 1}`}>
+                    Siguiente
+                  </Link>
+                </Button>
             </div>
           )}
         </CardContent>

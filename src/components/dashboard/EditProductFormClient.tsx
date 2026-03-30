@@ -197,16 +197,19 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
 
   return (
     <div className="flex flex-col gap-4 py-6 px-6 w-full">
-      <div className="flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Editar Producto</h1>
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Editar producto</h1>
           <p className="text-gray-600">
             Modifica la información del producto
           </p>
         </div>
+        <Button type="button" variant="outline" asChild>
+          <Link href="/dashboard/catalog">Volver al catálogo</Link>
+        </Button>
       </div>
 
-      <Card className="w-[600px] mx-auto">
+      <Card className="mx-auto w-full max-w-3xl">
         <CardHeader>
           <CardTitle>Información del Producto</CardTitle>
         </CardHeader>
@@ -360,7 +363,7 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
                   : "Actualizar Producto"}
               </Button>
               <Button type="button" variant="outline" asChild>
-                <Link href="/dashboard">Cancelar</Link>
+                <Link href="/dashboard/catalog">Cancelar</Link>
               </Button>
             </div>
           </form>

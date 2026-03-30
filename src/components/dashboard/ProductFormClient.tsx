@@ -21,6 +21,7 @@ import { CreateProductValues } from "@/types/products/types"
 import { toast } from "sonner"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { MiniCardManager } from "@/components/dashboard/MiniCardManager"
+import Link from "next/link"
 
 export function ProductFormClient() {
   const [isLoading, setIsLoading] = useState(false)
@@ -156,14 +157,19 @@ export function ProductFormClient() {
 
   return (
     <div className="flex flex-col gap-4 py-6 px-6 w-full">
-      <div className="flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Crear Nuevo Producto</h1>
+      <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Crear nuevo producto
+          </h1>
           <p className="text-gray-600">Completa la información del producto</p>
         </div>
+        <Button variant="outline" asChild>
+          <Link href="/dashboard/catalog">Volver al catálogo</Link>
+        </Button>
       </div>
 
-      <Card className="w-[600px] mx-auto">
+      <Card className="mx-auto w-full max-w-3xl">
         <CardHeader>
           <CardTitle>Información del Producto</CardTitle>
         </CardHeader>

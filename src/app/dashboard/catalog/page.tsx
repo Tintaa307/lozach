@@ -1,13 +1,18 @@
 import { getAllProductsAction } from "@/controllers/admin/admin-products-api-controller"
-import { getAllOrdersAction } from "@/controllers/admin/admin-orders-api-controller"
-import { getAllSubscribersAction } from "@/controllers/admin/admin-subscribers-api-controller"
 import { getUser } from "@/controllers/auth/auth-controller"
 import { redirect } from "next/navigation"
+import { DashboardClient } from "@/components/dashboard/DashboardClient"
 import { AdminShell } from "@/components/dashboard/AdminShell"
-import { DashboardOverviewClient } from "@/components/dashboard/DashboardOverviewClient"
 
-export default async function DashboardPage() {
-  // Verificar autenticación y rol de admin
+interface DashboardCatalogPageProps {
+  searchParams: Promise<{
+    page?: string
+  }>
+}
+
+export default async function DashboardCatalogPage({
+  searchParams,
+}: DashboardCatalogPageProps) {
   const userResult = await getUser()
   if (
     !userResult.success ||
@@ -18,19 +23,14 @@ export default async function DashboardPage() {
   }
 
   const user = userResult.data
+  const resolvedSearchParams = await searchParams
+  const currentPage = parseInt(resolvedSearchParams.page || "1")
+  const itemsPerPage = 12
 
   const productsResult = await getAllProductsAction()
   const allProducts =
     productsResult.status === 200 && productsResult.data
       ? productsResult.data
-      : []
-  const ordersResult = await getAllOrdersAction()
-  const orders =
-    ordersResult.status === 200 && ordersResult.data ? ordersResult.data : []
-  const subscribersResult = await getAllSubscribersAction()
-  const subscribers =
-    subscribersResult.status === 200 && subscribersResult.data
-      ? subscribersResult.data
       : []
 
   const sidebarUser = {
@@ -41,10 +41,11 @@ export default async function DashboardPage() {
 
   return (
     <AdminShell user={sidebarUser}>
-      <DashboardOverviewClient
-        products={allProducts}
-        orders={orders}
-        subscribers={subscribers}
+      <DashboardClient
+        allProducts={allProducts}
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+        basePath="/dashboard/catalog"
       />
     </AdminShell>
   )

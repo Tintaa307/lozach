@@ -1,8 +1,7 @@
 "use client"
 
-import { MailIcon, PlusCircleIcon, type LucideIcon } from "lucide-react"
+import { PlusCircleIcon, type LucideIcon } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 
 export function NavMain({
@@ -22,42 +21,53 @@ export function NavMain({
     icon?: LucideIcon
   }[]
 }) {
-  const router = useRouter()
+  const pathname = usePathname()
+  const isItemActive = (url: string) => {
+    if (url === "/dashboard") {
+      return pathname === url
+    }
+
+    if (url === "/dashboard/catalog") {
+      return (
+        pathname.startsWith("/dashboard/catalog") ||
+        pathname.startsWith("/dashboard/products")
+      )
+    }
+
+    return pathname.startsWith(url)
+  }
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
+              asChild
               tooltip="Agregar Productos"
-              onClick={() => {
-                router.push("/dashboard/products")
-              }}
               className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
             >
-              <PlusCircleIcon />
-              <span>Agregar Productos</span>
+              <Link href="/dashboard/products">
+                <PlusCircleIcon />
+                <span>Nuevo producto</span>
+              </Link>
             </SidebarMenuButton>
-            <Button
-              size="icon"
-              className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <MailIcon />
-              <span className="sr-only">Inbox</span>
-            </Button>
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
           {items.map((item) => (
-            <Link href={item.url} key={item.title} className="cursor-pointer">
-              <SidebarMenuItem className="cursor-pointer">
-                <SidebarMenuButton tooltip={item.title}>
+            <SidebarMenuItem key={item.title} className="cursor-pointer">
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                isActive={isItemActive(item.url)}
+              >
+                <Link href={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </Link>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarGroupContent>

@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Users,
   ArrowLeft,
+  Package2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -33,7 +34,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 const defaultUser = {
   name: "Admin",
-  email: "admin@lozach.com",
+  email: "lozacharg@gmail.com",
   avatar: "/avatars/admin.jpg",
 }
 
@@ -41,9 +42,14 @@ export function AppSidebar({ user = defaultUser, ...props }: AppSidebarProps) {
   const data = {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Resumen",
         url: "/dashboard",
         icon: LayoutDashboard,
+      },
+      {
+        title: "Catálogo",
+        url: "/dashboard/catalog",
+        icon: Package2,
       },
       {
         title: "Ventas",
@@ -67,12 +73,12 @@ export function AppSidebar({ user = defaultUser, ...props }: AppSidebarProps) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/dashboard">
+              <Link href="/dashboard">
                 <BarChart3 className="h-5 w-5" />
                 <span className="text-base font-semibold">
-                  Lozach Dashboard
+                  Lozach Admin
                 </span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

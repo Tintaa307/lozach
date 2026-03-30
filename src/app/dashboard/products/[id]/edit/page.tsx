@@ -1,10 +1,8 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { getUser } from "@/controllers/auth/auth-controller"
 import { getProductById } from "@/controllers/products/product-controller"
 import { redirect, notFound } from "next/navigation"
 import { EditProductFormClient } from "@/components/dashboard/EditProductFormClient"
+import { AdminShell } from "@/components/dashboard/AdminShell"
 
 interface EditProductPageProps {
   params: Promise<{
@@ -48,18 +46,8 @@ export default async function EditProductPage({
   }
 
   return (
-    <div className="min-h-screen w-full">
-      <SidebarProvider>
-        <AppSidebar variant="inset" user={sidebarUser} />
-        <SidebarInset className="flex-1 w-full">
-          <SiteHeader />
-          <div className="flex flex-1 flex-col w-full">
-            <div className="@container/main flex flex-1 flex-col gap-2 w-full">
-              <EditProductFormClient product={product} />
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+    <AdminShell user={sidebarUser}>
+      <EditProductFormClient product={product} />
+    </AdminShell>
   )
 }

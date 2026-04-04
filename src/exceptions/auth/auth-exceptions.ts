@@ -29,7 +29,7 @@ export class AuthVerificationException extends BaseException {
 
 export class AuthMissingUserException extends BaseException {
   constructor(message: string, userMessage: string = "Usuario no encontrado") {
-    super(message, 404, userMessage)
+    super(message, 401, userMessage)
   }
 }
 

@@ -55,6 +55,31 @@ export class OrderRepository {
     return data as Order
   }
 
+  async getOrderByExternalReferenceAdmin(
+    external_reference: string
+  ): Promise<Order> {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("external_reference", external_reference)
+      .single()
+
+    if (error) {
+      throw new OrderNotFoundException(error.message, "Orden no encontrada")
+    }
+
+    if (!data) {
+      throw new OrderNotFoundException(
+        "Orden no encontrada",
+        "Orden no encontrada"
+      )
+    }
+
+    return data as Order
+  }
+
   async updateOrder(id: string, order: UpdateOrderValues): Promise<void> {
     const supabase = createAdminClient()
 

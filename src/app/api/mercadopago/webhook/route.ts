@@ -10,6 +10,11 @@ export async function GET(): Promise<Response> {
 
 export async function POST(req: Request): Promise<Response> {
   try {
+    if (!accessToken) {
+      console.error("MercadoPago webhook: missing access token")
+      return new Response("Webhook misconfigured", { status: 500 })
+    }
+
     const body = await req.json()
 
     if (!body.data?.id || !body.type) {
@@ -50,7 +55,19 @@ export async function POST(req: Request): Promise<Response> {
 
     return new Response("OK", { status: 200 })
   } catch (error) {
-    console.error("Webhook processing error:", error)
+    const mpError = error as {
+      message?: string
+      status?: number
+      cause?: unknown
+      response?: { status?: number; data?: unknown }
+    }
+
+    console.error("Webhook processing error:", {
+      message: mpError?.message || "Unknown webhook error",
+      status: mpError?.status || mpError?.response?.status || null,
+      cause: mpError?.cause || null,
+      response: mpError?.response?.data || null,
+    })
     return new Response("Webhook processing error", { status: 500 })
   }
 }

@@ -151,6 +151,15 @@ export default function CheckoutClient({
       }
     } catch (error) {
       if (error instanceof AppActionException) {
+        if (
+          error.statusCode === 401 &&
+          error.userMessage?.includes("sesión iniciada")
+        ) {
+          toast.error("Tu sesión expiró. Iniciá sesión para continuar.")
+          router.push("/login")
+          return
+        }
+
         return toast.error(error.message)
       }
     } finally {

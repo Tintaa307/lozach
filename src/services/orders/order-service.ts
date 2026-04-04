@@ -29,6 +29,14 @@ export class OrderService {
     return orderData
   }
 
+  async getOrderByExternalReferenceAdmin(
+    external_reference: string
+  ): Promise<Order> {
+    return await this.orderRepository.getOrderByExternalReferenceAdmin(
+      external_reference
+    )
+  }
+
   async updateOrder(id: string, order: UpdateOrderValues): Promise<void> {
     return await this.orderRepository.updateOrder(id, order)
   }

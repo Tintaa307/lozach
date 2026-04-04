@@ -23,7 +23,6 @@ import {
   OrderItemsFetchException,
 } from "@/exceptions/order-items/order-items-exceptions"
 import { ShippingService } from "../shipping/shipping-service"
-import { OrderNotFoundException } from "@/exceptions/orders/orders-exceptions"
 import { Order } from "@/types/order/order"
 import { EmailService } from "../email/email-service"
 import { ShippingFetchException } from "@/exceptions/shipping/shipping-exceptions"
@@ -154,17 +153,23 @@ export class PaymentService {
     let createdOrderId: string | null = null
 
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || ""
+      const appUrl = (
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      ).replace(/\/$/, "")
       const isHttps = appUrl.startsWith("https://")
 
       const result = (await this.client.create({
         body: {
           items: items,
+          payer: {
+            email: user.email,
+          },
           back_urls: {
             success: `${appUrl}/payment/success`,
             failure: `${appUrl}/payment/failure`,
             pending: `${appUrl}/payment/pending`,
           },
+          notification_url: `${appUrl}/api/mercadopago/webhook`,
           // auto_return only works with HTTPS — omit on localhost/HTTP to avoid MP errors
           ...(isHttps ? { auto_return: "approved" } : {}),
           external_reference: request_id,
@@ -279,6 +284,11 @@ export class PaymentService {
         init_point: result.init_point,
       }
     } catch (error) {
+      this.logMercadoPagoError("create_preference", error, {
+        userId: user.id,
+        shippingMethod: shipping_method,
+      })
+
       if (createdOrderId) {
         await this.cleanupFailedOrderCreation(createdOrderId)
       }
@@ -303,16 +313,9 @@ export class PaymentService {
       )
     }
 
-    const order = await orderService.getOrderByExternalReference(
+    const order = await orderService.getOrderByExternalReferenceAdmin(
       external_reference
     )
-
-    if (!order) {
-      throw new OrderNotFoundException(
-        "Orden no encontrada",
-        "Orden no encontrada"
-      )
-    }
 
     const alreadyApproved = order.collection_status === "approved"
 
@@ -445,5 +448,26 @@ export class PaymentService {
     if (error) {
       console.error("Error cleaning up order:", orderId, error)
     }
+  }
+
+  private logMercadoPagoError(
+    context: string,
+    error: unknown,
+    extra: Record<string, unknown> = {}
+  ): void {
+    const mpError = error as {
+      message?: string
+      status?: number
+      cause?: unknown
+      response?: { status?: number; data?: unknown }
+    }
+
+    console.error(`[MercadoPago:${context}]`, {
+      message: mpError?.message || "Unknown MercadoPago error",
+      status: mpError?.status || mpError?.response?.status || null,
+      cause: mpError?.cause || null,
+      response: mpError?.response?.data || null,
+      ...extra,
+    })
   }
 }

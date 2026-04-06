@@ -24,11 +24,11 @@ export const CreatePreferenceSchema = z.object({
   products: z.array(
     z.object({
       id: z.number(),
-      quantity: z.number(),
-      color: z.string(),
-      size: z.string(),
+      quantity: z.number().int().positive("La cantidad debe ser mayor a 0"),
+      color: z.string().min(1, "El color es requerido"),
+      size: z.string().min(1, "El talle es requerido"),
     })
-  ),
+  ).min(1, "El carrito no puede estar vacío"),
   identifier: numericString("El DNI"),
   address: z.string().min(1, "La dirección es requerida"),
   details: z.string().min(1, "La casa es requerida"),

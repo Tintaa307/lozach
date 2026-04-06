@@ -135,17 +135,6 @@ export class PaymentService {
       order_items.push(productDetails)
     }
 
-    // Agregar item de envío si hay costo
-    if (shippingCostNumber > 0) {
-      items.push({
-        id: `shipping-${Date.now()}`,
-        title: `Envío - ${shipping_method}`,
-        quantity: 1,
-        unit_price: shippingCostNumber,
-        currency_id: "ARS",
-      })
-    }
-
     const request_id = `${user.id}-${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 15)}`
@@ -169,6 +158,18 @@ export class PaymentService {
             failure: `${appUrl}/payment/failure`,
             pending: `${appUrl}/payment/pending`,
           },
+          shipments:
+            shippingCostNumber > 0
+              ? {
+                  mode: "not_specified",
+                  cost: shippingCostNumber,
+                  free_shipping: false,
+                }
+              : {
+                  local_pickup: shipping_method === "store",
+                  cost: 0,
+                  free_shipping: true,
+                },
           notification_url: `${appUrl}/api/mercadopago/webhook`,
           // auto_return only works with HTTPS — omit on localhost/HTTP to avoid MP errors
           ...(isHttps ? { auto_return: "approved" } : {}),

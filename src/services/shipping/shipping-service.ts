@@ -20,6 +20,10 @@ export class ShippingService {
     return await this.shippingRepository.getShippingByOrderId(orderId)
   }
 
+  async findShippingByOrderId(orderId: string): Promise<Shipping | null> {
+    return await this.shippingRepository.findShippingByOrderId(orderId)
+  }
+
   async updateShipping(
     orderId: string,
     shipping: UpdateShippingValues

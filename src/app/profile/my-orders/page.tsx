@@ -18,8 +18,6 @@ const ServerMyOrders = async () => {
 
   const userOrders = await getOrders(user.data.id)
 
-  console.log(userOrders)
-
   if (!userOrders.success || !userOrders.data) {
     redirect("/profile")
   }
@@ -47,17 +45,15 @@ const ServerMyOrders = async () => {
       }
 
       // Get shipping for this specific order
-      const shipping = await actionErrorHandler(async () => {
-        const shipping = await getShippingByOrderId(order.id)
-        return shipping.data as Shipping
-      })
-
-      console.log(shipping)
+      const shippingResult = await getShippingByOrderId(order.id)
 
       return {
         order: order as Order,
         items: items,
-        shipping: shipping as Shipping,
+        shipping:
+          shippingResult.success && shippingResult.data
+            ? (shippingResult.data as Shipping)
+            : null,
       }
     })
   )

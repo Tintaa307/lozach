@@ -27,13 +27,26 @@ export class ShippingRepository {
   }
 
   async getShippingByOrderId(orderId: string): Promise<Shipping> {
+    const shipping = await this.findShippingByOrderId(orderId)
+
+    if (!shipping) {
+      throw new ShippingFetchException(
+        "Envío no encontrado",
+        "Envío no encontrado"
+      )
+    }
+
+    return shipping
+  }
+
+  async findShippingByOrderId(orderId: string): Promise<Shipping | null> {
     const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from("shipping")
       .select("*")
       .eq("order_id", orderId)
-      .single()
+      .maybeSingle()
 
     if (error) {
       throw new ShippingFetchException(
@@ -42,14 +55,7 @@ export class ShippingRepository {
       )
     }
 
-    if (!data) {
-      throw new ShippingFetchException(
-        "Envío no encontrado",
-        "Envío no encontrado"
-      )
-    }
-
-    return data as Shipping
+    return data ? (data as Shipping) : null
   }
 
   async updateShipping(

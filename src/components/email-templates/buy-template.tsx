@@ -34,6 +34,7 @@ const formatDate = (dateString: string) => {
 const getShippingMethodLabel = (method: string) => {
   const labels: Record<string, string> = {
     home: "Envío a domicilio",
+    branch: "Retiro en sucursal Correo Argentino",
     express: "Envío express",
     store: "Retiro en tienda",
   }
@@ -152,7 +153,7 @@ export default function OrderConfirmationEmail({
               </Column>
               <Column align="right">
                 <Text style={totalValue}>
-                  {formatMoney(shipping.shipping_cost, order.currency)}
+                  {formatMoney(shipping?.shipping_cost || 0, order.currency)}
                 </Text>
               </Column>
             </Row>
@@ -226,6 +227,12 @@ export default function OrderConfirmationEmail({
               Información de Envío
             </Heading>
 
+            {!shipping ? (
+              <Text style={addressText}>
+                No encontramos información de entrega asociada a esta orden.
+              </Text>
+            ) : (
+              <>
             <Row style={shippingRow}>
               <Column>
                 <Text style={shippingLabel}>Método</Text>
@@ -236,7 +243,11 @@ export default function OrderConfirmationEmail({
               <Column>
                 <Text style={shippingLabel}>Proveedor</Text>
                 <Text style={shippingValue}>
-                  {shipping.provider === "CA" ? "Correo Argentino" : "CA"}
+                  {shipping.shipping_method === "store"
+                    ? "Retiro en tienda"
+                    : shipping.provider === "CA"
+                      ? "Correo Argentino"
+                      : "CA"}
                 </Text>
               </Column>
             </Row>
@@ -269,9 +280,21 @@ export default function OrderConfirmationEmail({
                   enviaremos una notificación cuando esté listo. Por favor trae
                   una identificación válida y tu número de pedido.
                 </Text>
-                {/* <Text style={addressText}>
-                  <strong>ID de Seguimiento:</strong> {shipping.identifier}
-                </Text> */}
+              </div>
+            ) : shipping.shipping_method === "branch" ? (
+              <div>
+                <Text style={addressHeading}>Retiro en sucursal</Text>
+                <Text style={addressText}>{shipping.details}</Text>
+                <Text style={addressText}>
+                  Dirección del destinatario: {shipping.address}
+                </Text>
+                <Text style={addressText}>
+                  {shipping.city}, {shipping.state} {shipping.postal_code}
+                </Text>
+                <Text style={addressText}>Teléfono: {shipping.phone}</Text>
+                <Text style={addressText}>
+                  <strong>DNI/CUIT:</strong> {shipping.identifier}
+                </Text>
               </div>
             ) : (
               <div>
@@ -285,9 +308,11 @@ export default function OrderConfirmationEmail({
                 </Text>
                 <Text style={addressText}>Teléfono: {shipping.phone}</Text>
                 <Text style={addressText}>
-                  <strong>ID de Seguimiento:</strong> {shipping.identifier}
+                  <strong>DNI/CUIT:</strong> {shipping.identifier}
                 </Text>
               </div>
+            )}
+              </>
             )}
           </Section>
 

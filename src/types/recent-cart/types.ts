@@ -1,5 +1,4 @@
 export interface RecentCart {
-  id: number
   user_id: string
   product_id: number
   added_at: string

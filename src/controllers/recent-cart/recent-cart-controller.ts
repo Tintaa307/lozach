@@ -26,9 +26,9 @@ export const getRecentCartWithProducts = async (
   })
 }
 
-export const deleteRecentCart = async (id: number, userId: string) => {
+export const deleteRecentCart = async (productId: number, userId: string) => {
   return actionHandler(async () => {
-    return await recentCartService.deleteRecentCart(id, userId)
+    return await recentCartService.deleteRecentCart(productId, userId)
   })
 }
 

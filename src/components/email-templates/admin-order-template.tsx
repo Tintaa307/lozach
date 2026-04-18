@@ -16,6 +16,13 @@ const formatMoney = (amount: number, currency: string) =>
     currency,
   }).format(amount)
 
+const shippingMethodLabels: Record<string, string> = {
+  home: "Envío a domicilio",
+  branch: "Sucursal Correo Argentino",
+  express: "Envío express",
+  store: "Retiro en tienda",
+}
+
 export default function AdminOrderNotificationEmail({
   customerName,
   customerEmail,
@@ -66,17 +73,35 @@ export default function AdminOrderNotificationEmail({
 
           <Section style={section}>
             <Text style={label}>Envío</Text>
-            <Text style={value}>Método: {shipping.shipping_method}</Text>
-            <Text style={value}>
-              Costo: {formatMoney(shipping.shipping_cost, order.currency)}
-            </Text>
-            <Text style={value}>{shipping.address}</Text>
-            {!!shipping.details && <Text style={value}>{shipping.details}</Text>}
-            <Text style={value}>
-              {shipping.city}, {shipping.state} {shipping.postal_code}
-            </Text>
-            <Text style={value}>Tel: {shipping.phone}</Text>
-            <Text style={value}>DNI/CUIT: {shipping.identifier}</Text>
+            {!shipping ? (
+              <Text style={value}>Sin datos de entrega asociados.</Text>
+            ) : (
+              <>
+                <Text style={value}>
+                  Método:{" "}
+                  {shippingMethodLabels[shipping.shipping_method] ||
+                    shipping.shipping_method}
+                </Text>
+                <Text style={value}>
+                  Costo: {formatMoney(shipping.shipping_cost, order.currency)}
+                </Text>
+                {shipping.shipping_method === "store" ? (
+                  <Text style={value}>Retiro en tienda, sin despacho externo.</Text>
+                ) : (
+                  <>
+                    <Text style={value}>{shipping.address}</Text>
+                    {!!shipping.details && (
+                      <Text style={value}>{shipping.details}</Text>
+                    )}
+                    <Text style={value}>
+                      {shipping.city}, {shipping.state} {shipping.postal_code}
+                    </Text>
+                    <Text style={value}>Tel: {shipping.phone}</Text>
+                    <Text style={value}>DNI/CUIT: {shipping.identifier}</Text>
+                  </>
+                )}
+              </>
+            )}
           </Section>
         </Container>
       </Body>

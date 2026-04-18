@@ -202,7 +202,10 @@ export default function ProfileClient({
                 {lastCartProducts.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {lastCartProducts.map((recentCart) => (
-                      <Card key={recentCart.id} className="overflow-hidden">
+                      <Card
+                        key={`${recentCart.user_id}-${recentCart.product_id}`}
+                        className="overflow-hidden"
+                      >
                         <div className="aspect-square relative">
                           <Image
                             width={500}

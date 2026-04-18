@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   if (req.method !== "POST") {
     return NextResponse.json({
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     })
   }
 
-  const { user } = (await (await supabase).auth.getUser()).data
+  const { user } = (await supabase.auth.getUser()).data
 
   if (!user) {
     return NextResponse.json({
@@ -33,12 +33,16 @@ export async function POST(req: Request) {
     })
   }
 
-  const { error } = await (await supabase).from("user_recent_cart").insert({
-    user_id: user.id,
-    product_id,
-    added_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-  })
+  const now = new Date().toISOString()
+  const { error } = await supabase.from("user_recent_cart").upsert(
+    {
+      user_id: user.id,
+      product_id,
+      added_at: now,
+      created_at: now,
+    },
+    { onConflict: "user_id,product_id" }
+  )
 
   if (error) {
     console.log(error)

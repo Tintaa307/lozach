@@ -32,8 +32,8 @@ export class RecentCartService {
     )
   }
 
-  async deleteRecentCart(id: number, userId: string): Promise<void> {
-    return await this.recentCartRepository.deleteRecentCart(id, userId)
+  async deleteRecentCart(productId: number, userId: string): Promise<void> {
+    return await this.recentCartRepository.deleteRecentCart(productId, userId)
   }
 
   async clearRecentCart(userId: string): Promise<void> {

@@ -51,7 +51,7 @@ export interface Shipping {
   id: string
   created_at: string
   order_id: string
-  shipping_method: "home" | "express" | "store"
+  shipping_method: "home" | "branch" | "express" | "store"
   shipping_cost: number
   user_id: string
   provider: "CA"
@@ -70,7 +70,7 @@ type Props = {
   orders: {
     order: Order
     items: { product: Product; orderItem: OrderItem }[]
-    shipping: Shipping
+    shipping: Shipping | null
   }[]
 }
 
@@ -89,6 +89,7 @@ const statusConfig: Record<
 
 const shippingMethodLabels: Record<Shipping["shipping_method"], string> = {
   home: "Envío a domicilio",
+  branch: "Retiro en sucursal Correo Argentino",
   express: "Envío express",
   store: "Retiro en tienda",
 }
@@ -126,6 +127,7 @@ export default function MyOrdersSection({ orders }: Props) {
 
       // Search by shipping identifier
       if (
+        shipping &&
         shipping.identifier &&
         String(shipping.identifier).toLowerCase().includes(searchLower)
       )
@@ -143,6 +145,7 @@ export default function MyOrdersSection({ orders }: Props) {
 
       // Search by shipping status
       if (
+        shipping &&
         statusConfig[shipping.shipping_status]?.label
           .toLowerCase()
           .includes(searchLower)
@@ -158,7 +161,9 @@ export default function MyOrdersSection({ orders }: Props) {
         return true
 
       // Search by shipping method
-      const shippingMethodLabel = shippingMethodLabels[shipping.shipping_method]
+      const shippingMethodLabel = shipping
+        ? shippingMethodLabels[shipping.shipping_method]
+        : null
       if (
         shippingMethodLabel &&
         typeof shippingMethodLabel === "string" &&
@@ -309,33 +314,47 @@ export default function MyOrdersSection({ orders }: Props) {
                         Información de Envío
                       </h3>
                       <div className="space-y-2 text-sm text-neutral-800">
-                        <p>
-                          <span className="text-neutral-600">Método:</span>{" "}
-                          {shippingMethodLabels[shipping.shipping_method] ??
-                            "Método desconocido"}
-                        </p>
-                        <p>
-                          <span className="text-neutral-600">Dirección:</span>{" "}
-                          {shipping.address}
-                        </p>
-                        <p>
-                          <span className="text-neutral-600">Ciudad:</span>{" "}
-                          {shipping.city}, {shipping.state}
-                        </p>
-                        <p>
-                          <span className="text-neutral-600">CP:</span>{" "}
-                          {shipping.postal_code}
-                        </p>
-                        {shipping.details && (
-                          <p>
-                            <span className="text-neutral-600">Detalles:</span>{" "}
-                            {shipping.details}
+                        {shipping ? (
+                          <>
+                            <p>
+                              <span className="text-neutral-600">Método:</span>{" "}
+                              {shippingMethodLabels[shipping.shipping_method] ??
+                                "Método desconocido"}
+                            </p>
+                            {shipping.shipping_method !== "store" && (
+                              <>
+                                <p>
+                                  <span className="text-neutral-600">
+                                    Dirección:
+                                  </span>{" "}
+                                  {shipping.address}
+                                </p>
+                                <p>
+                                  <span className="text-neutral-600">Ciudad:</span>{" "}
+                                  {shipping.city}, {shipping.state}
+                                </p>
+                                <p>
+                                  <span className="text-neutral-600">CP:</span>{" "}
+                                  {shipping.postal_code}
+                                </p>
+                              </>
+                            )}
+                            {shipping.details && (
+                              <p>
+                                <span className="text-neutral-600">Detalles:</span>{" "}
+                                {shipping.details}
+                              </p>
+                            )}
+                            <p>
+                              <span className="text-neutral-600">Teléfono:</span>{" "}
+                              {shipping.phone}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-neutral-600">
+                            Sin información de entrega asociada.
                           </p>
                         )}
-                        <p>
-                          <span className="text-neutral-600">Teléfono:</span>{" "}
-                          {shipping.phone}
-                        </p>
                       </div>
                     </div>
 
@@ -354,7 +373,7 @@ export default function MyOrdersSection({ orders }: Props) {
                           <span>Envío</span>
                           <span>
                             {formatCurrency(
-                              shipping.shipping_cost,
+                              shipping?.shipping_cost || 0,
                               order.currency
                             )}
                           </span>

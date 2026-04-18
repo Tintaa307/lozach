@@ -12,14 +12,18 @@ export class RecentCartRepository {
   ): Promise<RecentCart> {
     const supabase = await createClient()
 
+    const now = new Date().toISOString()
     const { data, error } = await supabase
       .from("user_recent_cart")
-      .insert({
+      .upsert(
+        {
         product_id: productId,
         user_id: userId,
-        added_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      })
+          added_at: now,
+          created_at: now,
+        },
+        { onConflict: "user_id,product_id" }
+      )
       .select()
       .single()
 
@@ -90,13 +94,13 @@ export class RecentCartRepository {
     return data as RecentCartWithProduct[]
   }
 
-  async deleteRecentCart(id: number, userId: string): Promise<void> {
+  async deleteRecentCart(productId: number, userId: string): Promise<void> {
     const supabase = await createClient()
 
     const { error } = await supabase
       .from("user_recent_cart")
       .delete()
-      .eq("id", id)
+      .eq("product_id", productId)
       .eq("user_id", userId)
 
     if (error) {

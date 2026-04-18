@@ -1,3 +1,5 @@
+import { CheckoutShippingMethod } from "../shipping/shipping"
+
 export interface CreatePreferenceValues {
   products: Array<{
     id: number
@@ -12,8 +14,11 @@ export interface CreatePreferenceValues {
   city: string
   state: string
   phone: string
-  shipping_method: "home" | "express" | "store"
-  shipping_cost: string
+  shipping_method: CheckoutShippingMethod
+  shipping_cost: number
+  agency_code?: string
+  agency_name?: string
+  agency_address?: string
   save_info: boolean
 }
 

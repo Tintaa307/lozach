@@ -25,10 +25,16 @@ import {
 import { ShippingService } from "../shipping/shipping-service"
 import { Order } from "@/types/order/order"
 import { EmailService } from "../email/email-service"
-import { ShippingFetchException } from "@/exceptions/shipping/shipping-exceptions"
 import { Product } from "@/types/types"
 import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
 import { CreateShippingValues } from "@/types/shipping/shipping"
+import { CorreoArgentinoService } from "../shipping/correo-argentino-service"
+import {
+  buildShippingDetails,
+  isStorePickup,
+  normalizeShippingCostForMethod,
+  shouldUseCorreoArgentino,
+} from "@/lib/utils/shipping-utils"
 
 const userService = new AuthService()
 const productService = new ProductService()
@@ -37,6 +43,7 @@ const addressesService = new AddressesService()
 const orderItemsService = new OrderItemsService()
 const shippingService = new ShippingService()
 const emailService = new EmailService()
+const correoArgentinoService = new CorreoArgentinoService()
 
 export class PaymentService {
   private readonly client: Preference
@@ -66,13 +73,17 @@ export class PaymentService {
       phone,
       shipping_method,
       shipping_cost,
+      agency_code,
+      agency_name,
+      agency_address,
       save_info,
     } = body
 
     const validatedData = CreatePreferenceSchema.safeParse(body)
-
-    const shippingCostNumber =
-      shipping_cost !== "Gratis" ? Number(shipping_cost) : 0
+    const shippingCostNumber = normalizeShippingCostForMethod(
+      shipping_method,
+      shipping_cost
+    )
 
     if (!validatedData.success) {
       throw new InvalidPreferenceDataException(
@@ -202,7 +213,7 @@ export class PaymentService {
       })
       createdOrderId = order.id
 
-      if (save_info) {
+      if (save_info && !isStorePickup(shipping_method)) {
         await addressesService.createAddress({
           address,
           details,
@@ -239,7 +250,11 @@ export class PaymentService {
 
       const shippingPayload: CreateShippingValues = {
         address,
-        details,
+        details: buildShippingDetails(details, {
+          code: agency_code || "",
+          name: agency_name || agency_code || "",
+          address: agency_address || "",
+        }),
         postal_code: Number(postal_code),
         city,
         state,
@@ -319,15 +334,7 @@ export class PaymentService {
     )
 
     const alreadyApproved = order.collection_status === "approved"
-
-    if (
-      alreadyApproved &&
-      collection_status === "approved" &&
-      order.email_sent &&
-      order.processed_at
-    ) {
-      return
-    }
+    const isNewApproval = !alreadyApproved && collection_status === "approved"
 
     if (collection_status !== "approved") {
       if (
@@ -344,7 +351,7 @@ export class PaymentService {
       }
     }
 
-    if (!alreadyApproved && collection_status === "approved") {
+    if (isNewApproval) {
       await orderService.updateOrder(order.id, {
         collection_status: collection_status,
         external_reference: external_reference,
@@ -354,11 +361,19 @@ export class PaymentService {
         updated_at: new Date().toISOString(),
       })
 
-      await shippingService.updateShipping(order.id, {
-        order_id: order.id,
-        shipping_status: "ready",
-        updated_at: new Date().toISOString(),
-      })
+      const shipping = await shippingService.findShippingByOrderId(order.id)
+
+      if (shipping) {
+        await shippingService.updateShipping(order.id, {
+          order_id: order.id,
+          shipping_status: "ready",
+          updated_at: new Date().toISOString(),
+        })
+
+        if (shouldUseCorreoArgentino(shipping.shipping_method)) {
+          await this.tryImportShipmentToCorreo(order, shipping)
+        }
+      }
 
       // TODO: Remove stock from products
     }
@@ -401,14 +416,7 @@ export class PaymentService {
       }
     }
 
-    const shipping = await shippingService.getShippingByOrderId(order.id)
-
-    if (!shipping) {
-      throw new ShippingFetchException(
-        "Envío no encontrado",
-        "Envío no encontrado"
-      )
-    }
+    const shipping = await shippingService.findShippingByOrderId(order.id)
 
     const user = await userService.getUserById(order.user_id)
 
@@ -427,6 +435,32 @@ export class PaymentService {
       order,
       shipping,
     })
+  }
+
+  private async tryImportShipmentToCorreo(
+    order: Order,
+    shipping: NonNullable<Awaited<ReturnType<ShippingService["findShippingByOrderId"]>>>
+  ): Promise<void> {
+    try {
+      const [user, orderItems] = await Promise.all([
+        userService.getUserById(order.user_id),
+        orderItemsService.getOrderItemsByOrderId(order.id),
+      ])
+
+      await correoArgentinoService.importShipment({
+        order,
+        shipping,
+        orderItems,
+        recipientName: user.name,
+        recipientEmail: user.email,
+      })
+    } catch (error) {
+      console.error("[CorreoArgentino:importShipment]", {
+        orderId: order.id,
+        shippingMethod: shipping.shipping_method,
+        error,
+      })
+    }
   }
 
   private async cleanupFailedOrderCreation(orderId: string): Promise<void> {

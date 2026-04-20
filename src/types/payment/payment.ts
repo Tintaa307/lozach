@@ -31,3 +31,10 @@ export type UpdatePreferenceValues = {
 export type CreatePreferenceResponse = {
   init_point: string
 }
+
+export type CreateBankTransferOrderResponse = {
+  redirect_url: string
+  external_reference: string
+  total_amount: number
+  discount_amount: number
+}

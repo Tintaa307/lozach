@@ -6,11 +6,18 @@ import { useRouter } from "next/navigation"
 import { ArrowRight, Loader2, ShoppingBag } from "lucide-react"
 import { toast } from "sonner"
 
-import { createPreference } from "@/controllers/payment/payment-controller"
+import {
+  createBankTransferOrder,
+  createPreference,
+} from "@/controllers/payment/payment-controller"
 import { useCart } from "@/context/CartContext"
-import { SHIPPING_COSTS } from "@/lib/consts/shipping"
 import { actionErrorHandler } from "@/lib/handlers/actionErrorHandler"
 import { PaymentSchema } from "@/lib/validations/payment-schema"
+import {
+  BANK_TRANSFER_PAYMENT_TYPE,
+  MERCADO_PAGO_PAYMENT_TYPE,
+  calculateBankTransferDiscount,
+} from "@/lib/utils/payment-utils"
 import { Address } from "@/types/address/address"
 import { AppActionException } from "@/types/exceptions"
 import {
@@ -47,6 +54,10 @@ type CheckoutForm = {
   agency_address?: string
   save_info: boolean
 }
+
+type CheckoutPaymentMethod =
+  | typeof MERCADO_PAGO_PAYMENT_TYPE
+  | typeof BANK_TRANSFER_PAYMENT_TYPE
 
 const EMPTY_FORM = {
   identifier: "",
@@ -87,11 +98,14 @@ export default function CheckoutClient({
 }: {
   address: Address | null
 }) {
-  const { cartItems, subtotal } = useCart()
+  const { cartItems, subtotal, clearCart } = useCart()
   const router = useRouter()
   const isSubmittingRef = useRef(false)
 
   const [method, setMethod] = useState<CheckoutShippingMethod>("home")
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>(
+    MERCADO_PAGO_PAYMENT_TYPE
+  )
   const [saveInfo, setSaveInfo] = useState(false)
   const [useSavedAddress, setUseSavedAddress] = useState(Boolean(address))
   const [isLoading, setIsLoading] = useState(false)
@@ -109,7 +123,11 @@ export default function CheckoutClient({
   })
 
   const quoteItems = useMemo(
-    () => cartItems.map((item) => ({ quantity: item.quantity })),
+    () =>
+      cartItems.map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+      })),
     [cartItems]
   )
 
@@ -274,12 +292,30 @@ export default function CheckoutClient({
     }
   }, [formData.agency_code, formData.city, formData.postal_code, formData.state, method])
 
-  const shippingCost =
-    method === "store" ? 0 : quote?.cost ?? SHIPPING_COSTS[method]
-  const total = subtotal + shippingCost
+  const shippingCost = method === "store" ? 0 : quote?.cost ?? null
+  const transferDiscount =
+    paymentMethod === BANK_TRANSFER_PAYMENT_TYPE
+      ? calculateBankTransferDiscount(subtotal)
+      : 0
+  const total = subtotal - transferDiscount + (shippingCost ?? 0)
   const selectedAgency = agencies.find(
     (agency) => agency.code === formData.agency_code
   )
+  const getMethodCostLabel = (targetMethod: CheckoutShippingMethod) => {
+    if (targetMethod === "store") {
+      return "Gratis"
+    }
+
+    if (method !== targetMethod) {
+      return "A calcular"
+    }
+
+    if (isQuoting) {
+      return "Calculando..."
+    }
+
+    return shippingCost === null ? "A calcular" : formatCurrency(shippingCost)
+  }
 
   const setField = (field: keyof CheckoutForm, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -324,6 +360,11 @@ export default function CheckoutClient({
       toast.error("Seleccioná una sucursal de Correo Argentino.")
       return
     }
+    if (method !== "store" && shippingCost === null) {
+      toast.error("Completá el código postal para calcular el envío.")
+      return
+    }
+    const finalShippingCost = shippingCost ?? 0
 
     isSubmittingRef.current = true
     setIsLoading(true)
@@ -335,28 +376,45 @@ export default function CheckoutClient({
         return
       }
 
+      const paymentPayload = {
+        identifier: formData.identifier,
+        address: formData.address,
+        details: formData.details,
+        postal_code: formData.postal_code,
+        city: formData.city,
+        state: formData.state,
+        phone: formData.phone,
+        shipping_method: formData.shipping_method,
+        shipping_cost: finalShippingCost,
+        agency_code: formData.agency_code,
+        agency_name: formData.agency_name,
+        agency_address: formData.agency_address,
+        save_info: formData.save_info,
+        products: cartItems.map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
+          color: item.color,
+          size: item.size,
+        })),
+      }
+
+      if (paymentMethod === BANK_TRANSFER_PAYMENT_TYPE) {
+        const order = await actionErrorHandler(async () =>
+          createBankTransferOrder(paymentPayload)
+        )
+
+        if (order.success && order.data) {
+          clearCart()
+          router.push(order.data.redirect_url)
+          return
+        }
+
+        toast.error(order.message || "No se pudo crear el pedido.")
+        return
+      }
+
       const preference = await actionErrorHandler(async () =>
-        createPreference({
-          identifier: formData.identifier,
-          address: formData.address,
-          details: formData.details,
-          postal_code: formData.postal_code,
-          city: formData.city,
-          state: formData.state,
-          phone: formData.phone,
-          shipping_method: formData.shipping_method,
-          shipping_cost: shippingCost,
-          agency_code: formData.agency_code,
-          agency_name: formData.agency_name,
-          agency_address: formData.agency_address,
-          save_info: formData.save_info,
-          products: cartItems.map((item) => ({
-            id: item.id,
-            quantity: item.quantity,
-            color: item.color,
-            size: item.size,
-          })),
-        })
+        createPreference(paymentPayload)
       )
 
       if (preference.success && preference.data) {
@@ -415,7 +473,7 @@ export default function CheckoutClient({
               Finalizar compra
             </h1>
             <p className="text-gray-600">
-              Cotización con Correo Argentino y pago por Mercado Pago.
+              Cotización con Correo Argentino y métodos de pago disponibles.
             </p>
           </div>
 
@@ -461,9 +519,7 @@ export default function CheckoutClient({
                         A domicilio
                       </Label>
                       <span>
-                        {formatCurrency(
-                          method === "home" ? shippingCost : SHIPPING_COSTS.home
-                        )}
+                        {getMethodCostLabel("home")}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -472,11 +528,7 @@ export default function CheckoutClient({
                         Retiro en sucursal Correo Argentino
                       </Label>
                       <span>
-                        {formatCurrency(
-                          method === "branch"
-                            ? shippingCost
-                            : SHIPPING_COSTS.branch
-                        )}
+                        {getMethodCostLabel("branch")}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -484,7 +536,9 @@ export default function CheckoutClient({
                       <Label htmlFor="store" className="flex-1 cursor-pointer">
                         Retiro en tienda
                       </Label>
-                      <span className="text-green-600">Gratis</span>
+                      <span className="text-green-600">
+                        {getMethodCostLabel("store")}
+                      </span>
                     </div>
                   </RadioGroup>
 
@@ -645,6 +699,57 @@ export default function CheckoutClient({
                 </CardContent>
               </Card>
 
+              <Card>
+                <CardHeader>
+                  <CardTitle>Método de pago</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <RadioGroup
+                    value={paymentMethod}
+                    onValueChange={(value) =>
+                      setPaymentMethod(value as CheckoutPaymentMethod)
+                    }
+                  >
+                    <div className="flex items-center space-x-2 rounded-lg border p-3">
+                      <RadioGroupItem
+                        value={MERCADO_PAGO_PAYMENT_TYPE}
+                        id="payment-mercadopago"
+                      />
+                      <Label
+                        htmlFor="payment-mercadopago"
+                        className="flex-1 cursor-pointer"
+                      >
+                        Mercado Pago
+                      </Label>
+                      <span className="text-sm text-gray-500">
+                        Sin descuento
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 rounded-lg border border-green-200 bg-green-50 p-3">
+                      <RadioGroupItem
+                        value={BANK_TRANSFER_PAYMENT_TYPE}
+                        id="payment-bank-transfer"
+                      />
+                      <Label
+                        htmlFor="payment-bank-transfer"
+                        className="flex-1 cursor-pointer"
+                      >
+                        Transferencia bancaria
+                      </Label>
+                      <span className="text-sm font-medium text-green-700">
+                        20% OFF
+                      </span>
+                    </div>
+                  </RadioGroup>
+                  {paymentMethod === BANK_TRANSFER_PAYMENT_TYPE && (
+                    <p className="text-sm text-gray-600">
+                      El descuento se aplica sobre los productos. El envío se
+                      suma aparte.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
             </div>
 
             <Card>
@@ -679,6 +784,12 @@ export default function CheckoutClient({
                     <span>Subtotal</span>
                     <span>{formatCurrency(subtotal)}</span>
                   </div>
+                  {paymentMethod === BANK_TRANSFER_PAYMENT_TYPE && (
+                    <div className="flex justify-between text-green-700">
+                      <span>Descuento transferencia (20%)</span>
+                      <span>-{formatCurrency(transferDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Envío</span>
                     <span>
@@ -686,11 +797,17 @@ export default function CheckoutClient({
                         ? "Gratis"
                         : isQuoting
                           ? "Calculando..."
-                          : formatCurrency(shippingCost)}
+                          : shippingCost === null
+                            ? "A calcular"
+                            : formatCurrency(shippingCost)}
                     </span>
                   </div>
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
-                    <span>Total</span>
+                    <span>
+                      {method !== "store" && shippingCost === null
+                        ? "Total parcial"
+                        : "Total"}
+                    </span>
                     <span>{formatCurrency(total)}</span>
                   </div>
                 </div>
@@ -717,6 +834,7 @@ export default function CheckoutClient({
                   disabled={
                     isLoading ||
                     isQuoting ||
+                    (method !== "store" && shippingCost === null) ||
                     (method === "branch" && !formData.agency_code)
                   }
                 >
@@ -726,7 +844,10 @@ export default function CheckoutClient({
                     </span>
                   ) : (
                     <span className="flex items-center justify-center gap-2">
-                      Proceder al pago <ArrowRight className="w-4 h-4" />
+                      {paymentMethod === BANK_TRANSFER_PAYMENT_TYPE
+                        ? "Crear pedido por transferencia"
+                        : "Proceder al pago"}{" "}
+                      <ArrowRight className="w-4 h-4" />
                     </span>
                   )}
                 </Button>

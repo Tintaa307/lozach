@@ -2,8 +2,12 @@ import {
   InvalidPreferenceDataException,
   PaymentCreationException,
 } from "@/exceptions/payment/payment-exceptions"
-import { CreatePreferenceSchema } from "@/lib/validations/payment-schema"
 import {
+  CreateBankTransferOrderSchema,
+  CreatePreferenceSchema,
+} from "@/lib/validations/payment-schema"
+import {
+  CreateBankTransferOrderResponse,
   CreatePreferenceResponse,
   CreatePreferenceValues,
   UpdatePreferenceValues,
@@ -35,6 +39,12 @@ import {
   normalizeShippingCostForMethod,
   shouldUseCorreoArgentino,
 } from "@/lib/utils/shipping-utils"
+import {
+  BANK_TRANSFER_PAYMENT_TYPE,
+  MERCADO_PAGO_PAYMENT_TYPE,
+  calculateBankTransferDiscount,
+  calculateBankTransferTotal,
+} from "@/lib/utils/payment-utils"
 
 const userService = new AuthService()
 const productService = new ProductService()
@@ -46,9 +56,13 @@ const emailService = new EmailService()
 const correoArgentinoService = new CorreoArgentinoService()
 
 export class PaymentService {
-  private readonly client: Preference
+  private client: Preference | null = null
 
-  constructor() {
+  private getMercadoPagoClient(): Preference {
+    if (this.client) {
+      return this.client
+    }
+
     const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN as string
     if (!accessToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN is not set")
@@ -57,6 +71,8 @@ export class PaymentService {
     const config = new MercadoPagoConfig({ accessToken })
 
     this.client = new Preference(config)
+
+    return this.client
   }
 
   async createPreference(
@@ -158,7 +174,7 @@ export class PaymentService {
       ).replace(/\/$/, "")
       const isHttps = appUrl.startsWith("https://")
 
-      const result = (await this.client.create({
+      const result = (await this.getMercadoPagoClient().create({
         body: {
           items: items,
           payer: {
@@ -203,7 +219,7 @@ export class PaymentService {
         total_amount: totalAmount + shippingCostNumber,
         subtotal: totalAmount,
         payment_id: result.id,
-        payment_type: "mercadopago",
+        payment_type: MERCADO_PAGO_PAYMENT_TYPE,
         collection_id: result.id,
         collection_status: "pending",
         external_reference: request_id,
@@ -313,6 +329,222 @@ export class PaymentService {
       throw new PaymentCreationException(
         (error as Error).message,
         "Error al crear la preferencia. Por favor intente nuevamente."
+      )
+    }
+  }
+
+  async createBankTransferOrder(
+    body: CreatePreferenceValues
+  ): Promise<CreateBankTransferOrderResponse> {
+    const {
+      products,
+      identifier,
+      address,
+      details,
+      postal_code,
+      city,
+      state,
+      phone,
+      shipping_method,
+      shipping_cost,
+      agency_code,
+      agency_name,
+      agency_address,
+      save_info,
+    } = body
+
+    const validatedData = CreateBankTransferOrderSchema.safeParse(body)
+    const shippingCostNumber = normalizeShippingCostForMethod(
+      shipping_method,
+      shipping_cost
+    )
+
+    if (!validatedData.success) {
+      throw new InvalidPreferenceDataException(
+        validatedData.error.message,
+        "Revisa la información de los campos",
+        validatedData.error.flatten().fieldErrors as Record<string, string[]>
+      )
+    }
+
+    const user = await userService.getUser()
+
+    if (!user) {
+      throw new AuthMissingUserException(
+        "No hay una sesión iniciada",
+        "No hay una sesión iniciada"
+      )
+    }
+
+    let totalAmount = 0
+    const order_items = []
+
+    for (const cartItem of products) {
+      if (!cartItem.id) {
+        throw new ValidationException("ID de producto no proporcionado")
+      }
+
+      const product = await productService.getProductById(cartItem.id)
+
+      if (!product) {
+        throw new ProductNotFoundException(
+          "Producto no encontrado",
+          "Producto no encontrado"
+        )
+      }
+
+      const totalPrice = product.price * cartItem.quantity
+      totalAmount += totalPrice
+
+      const productDetails = {
+        product_id: product.id,
+        color: cartItem.color,
+        size: cartItem.size,
+        product_name: product.name,
+        quantity: cartItem.quantity,
+        unit_price: product.price,
+        sku: product.sku,
+      }
+
+      order_items.push(productDetails)
+    }
+
+    const discountAmount = calculateBankTransferDiscount(totalAmount)
+    const finalTotalAmount = calculateBankTransferTotal(
+      totalAmount,
+      shippingCostNumber
+    )
+    const request_id = `${user.id}-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`
+
+    let createdOrderId: string | null = null
+
+    try {
+      const order = await orderService.createOrder({
+        user_id: user.id,
+        total_amount: finalTotalAmount,
+        subtotal: totalAmount,
+        payment_id: null,
+        payment_type: BANK_TRANSFER_PAYMENT_TYPE,
+        collection_id: null,
+        collection_status: "pending",
+        external_reference: request_id,
+        currency: "ARS",
+        phone: phone,
+        expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+      })
+      createdOrderId = order.id
+
+      if (save_info && !isStorePickup(shipping_method)) {
+        await addressesService.createAddress({
+          address,
+          details,
+          postal_code: Number(postal_code),
+          city,
+          state,
+          phone,
+          identifier: Number(identifier),
+          order_id: order.id,
+          user_id: user.id,
+        })
+      }
+
+      for (const item of order_items) {
+        try {
+          await orderItemsService.createOrderItem({
+            order_id: order.id,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            sku: item.sku,
+            currency: "ARS" as const,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            color: item.color,
+            size: item.size,
+          })
+        } catch (error) {
+          throw new OrderItemsCreationException(
+            (error as Error).message,
+            "Error al crear el item de la orden. Por favor intente nuevamente."
+          )
+        }
+      }
+
+      const shippingPayload: CreateShippingValues = {
+        address,
+        details: buildShippingDetails(details, {
+          code: agency_code || "",
+          name: agency_name || agency_code || "",
+          address: agency_address || "",
+        }),
+        postal_code: Number(postal_code),
+        city,
+        state,
+        phone,
+        identifier: Number(identifier),
+        order_id: order.id,
+        user_id: user.id,
+        shipping_method,
+        shipping_cost: shippingCostNumber,
+        shipping_status: "draft",
+        provider: "CA",
+      }
+
+      await shippingService.createShipping(shippingPayload)
+
+      try {
+        const user = await userService.getUserById(order.user_id)
+        await emailService.sendAdminOrderNotificationEmail({
+          customerName: user.name,
+          customerEmail: user.email,
+          order,
+          orderItems: order_items.map((item) => ({
+            id: crypto.randomUUID(),
+            order_id: order.id,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            sku: item.sku,
+            currency: "ARS",
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            color: item.color,
+            size: item.size,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })),
+          shipping: shippingPayload,
+        })
+      } catch (error) {
+        console.error("Error sending admin order notification:", error)
+      }
+
+      const params = new URLSearchParams({
+        payment_method: BANK_TRANSFER_PAYMENT_TYPE,
+        external_reference: request_id,
+        amount: String(finalTotalAmount),
+      })
+
+      return {
+        redirect_url: `/payment/pending?${params.toString()}`,
+        external_reference: request_id,
+        total_amount: finalTotalAmount,
+        discount_amount: discountAmount,
+      }
+    } catch (error) {
+      if (createdOrderId) {
+        await this.cleanupFailedOrderCreation(createdOrderId)
+      }
+
+      console.error("[BankTransfer:create_order]", {
+        userId: user.id,
+        shippingMethod: shipping_method,
+        error,
+      })
+
+      throw new PaymentCreationException(
+        (error as Error).message,
+        "Error al crear la orden por transferencia. Por favor intente nuevamente."
       )
     }
   }

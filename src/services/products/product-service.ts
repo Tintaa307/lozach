@@ -1,7 +1,7 @@
 import { ProductRepository } from "@/repositories/products/product-repository"
-import { Product } from "@/types/types"
 import {
   CreateProductValues,
+  Product,
   ProductFilters,
   UpdateProductValues,
   CategoryType,

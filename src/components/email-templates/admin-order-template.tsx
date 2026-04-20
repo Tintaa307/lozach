@@ -1,4 +1,5 @@
 import { AdminOrderNotificationBody } from "@/types/email/email"
+import { getPaymentTypeLabel } from "@/lib/utils/payment-utils"
 import {
   Body,
   Container,
@@ -34,6 +35,11 @@ export default function AdminOrderNotificationEmail({
     0,
     8
   )}`
+  const shippingAmount = shipping?.shipping_cost || 0
+  const discountAmount = Math.max(
+    0,
+    order.subtotal + shippingAmount - order.total_amount
+  )
 
   return (
     <Html>
@@ -48,6 +54,16 @@ export default function AdminOrderNotificationEmail({
             <Text style={value}>#{order.id.slice(0, 8)}</Text>
             <Text style={label}>Estado de pago</Text>
             <Text style={value}>{order.collection_status || "pending"}</Text>
+            <Text style={label}>Método de pago</Text>
+            <Text style={value}>{getPaymentTypeLabel(order.payment_type)}</Text>
+            {discountAmount > 0 && (
+              <>
+                <Text style={label}>Descuento</Text>
+                <Text style={value}>
+                  -{formatMoney(discountAmount, order.currency)}
+                </Text>
+              </>
+            )}
             <Text style={label}>Total</Text>
             <Text style={value}>
               {formatMoney(order.total_amount, order.currency)}

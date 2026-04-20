@@ -1,5 +1,14 @@
 import { z } from "zod"
 
+const nullablePositiveNumber = (label: string) =>
+  z
+    .number({
+      invalid_type_error: `${label} debe ser un número`,
+    })
+    .positive(`${label} debe ser mayor a 0`)
+    .nullable()
+    .optional()
+
 export const CreateProductSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   stock: z.string().min(1, "El stock es requerido"),
@@ -14,6 +23,10 @@ export const CreateProductSchema = z.object({
     talles: z.array(z.string()).min(1, "Al menos una talla es requerida"),
   }),
   image_url: z.string().url("URL de imagen inválida").optional(),
+  shipping_weight_grams: nullablePositiveNumber("El peso"),
+  shipping_height_cm: nullablePositiveNumber("El alto"),
+  shipping_width_cm: nullablePositiveNumber("El ancho"),
+  shipping_length_cm: nullablePositiveNumber("El largo"),
 })
 
 export const UpdateProductSchema = z.object({
@@ -37,6 +50,10 @@ export const UpdateProductSchema = z.object({
     })
     .optional(),
   image_url: z.string().url("URL de imagen inválida").optional(),
+  shipping_weight_grams: nullablePositiveNumber("El peso"),
+  shipping_height_cm: nullablePositiveNumber("El alto"),
+  shipping_width_cm: nullablePositiveNumber("El ancho"),
+  shipping_length_cm: nullablePositiveNumber("El largo"),
 })
 
 export type CreateProductValues = z.infer<typeof CreateProductSchema>

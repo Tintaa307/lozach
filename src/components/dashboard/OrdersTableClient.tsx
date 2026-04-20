@@ -24,6 +24,7 @@ import {
   ShoppingBag,
 } from "lucide-react"
 import { OrderWithItems } from "@/types/order/order"
+import { getPaymentTypeLabel } from "@/lib/utils/payment-utils"
 
 const statusConfig: Record<
   string,
@@ -154,6 +155,11 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
           const shipping = Array.isArray(order.shipping)
             ? order.shipping[0]
             : undefined
+          const shippingAmount = shipping?.shipping_cost || 0
+          const discountAmount = Math.max(
+            0,
+            order.subtotal + shippingAmount - order.total_amount
+          )
 
           return (
             <>
@@ -196,7 +202,7 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
                       className="bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/50 dark:text-sky-400 dark:border-sky-800 gap-1.5 font-medium capitalize"
                     >
                       <CreditCard className="h-3 w-3" />
-                      {order.payment_type}
+                      {getPaymentTypeLabel(order.payment_type)}
                     </Badge>
                   ) : (
                     <span className="text-sm text-muted-foreground">-</span>
@@ -290,15 +296,19 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
                                   {formatCurrency(order.subtotal)}
                                 </span>
                               </div>
-                              {order.total_amount !== order.subtotal && (
-                                <div className="flex justify-between gap-8">
-                                  <span className="text-muted-foreground">
-                                    Envío
-                                  </span>
+                              <div className="flex justify-between gap-8">
+                                <span className="text-muted-foreground">
+                                  Envío
+                                </span>
+                                <span className="tabular-nums">
+                                  {formatCurrency(shippingAmount)}
+                                </span>
+                              </div>
+                              {discountAmount > 0 && (
+                                <div className="flex justify-between gap-8 text-emerald-700">
+                                  <span>Descuento transferencia</span>
                                   <span className="tabular-nums">
-                                    {formatCurrency(
-                                      order.total_amount - order.subtotal
-                                    )}
+                                    -{formatCurrency(discountAmount)}
                                   </span>
                                 </div>
                               )}

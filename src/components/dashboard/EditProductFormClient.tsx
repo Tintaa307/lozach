@@ -23,6 +23,14 @@ import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { MiniCardManager } from "@/components/dashboard/MiniCardManager"
 import Link from "next/link"
 
+const parseNullableNumber = (value: string) => {
+  if (value.trim() === "") {
+    return null
+  }
+
+  return Number(value)
+}
+
 interface EditProductFormClientProps {
   product: Product
 }
@@ -52,6 +60,10 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
     fabric: product.fabric,
     price: product.price,
     size: product.size,
+    shipping_weight_grams: product.shipping_weight_grams ?? 500,
+    shipping_height_cm: product.shipping_height_cm ?? 10,
+    shipping_width_cm: product.shipping_width_cm ?? 20,
+    shipping_length_cm: product.shipping_length_cm ?? 15,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -307,6 +319,87 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
                   }
                   required
                 />
+              </div>
+            </div>
+
+            <div className="space-y-4 rounded-lg border p-4">
+              <div>
+                <h3 className="font-semibold">Datos para Correo Argentino</h3>
+                <p className="text-sm text-gray-600">
+                  Se usan para cotizar el envío. Peso en gramos y medidas del
+                  paquete en centímetros.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="shipping_weight_grams">Peso (g)</Label>
+                  <Input
+                    id="shipping_weight_grams"
+                    type="number"
+                    min={1}
+                    value={formData.shipping_weight_grams ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        shipping_weight_grams: parseNullableNumber(
+                          e.target.value
+                        ),
+                      }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shipping_height_cm">Alto (cm)</Label>
+                  <Input
+                    id="shipping_height_cm"
+                    type="number"
+                    min={0.1}
+                    step={0.1}
+                    value={formData.shipping_height_cm ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        shipping_height_cm: parseNullableNumber(e.target.value),
+                      }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shipping_width_cm">Ancho (cm)</Label>
+                  <Input
+                    id="shipping_width_cm"
+                    type="number"
+                    min={0.1}
+                    step={0.1}
+                    value={formData.shipping_width_cm ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        shipping_width_cm: parseNullableNumber(e.target.value),
+                      }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shipping_length_cm">Largo (cm)</Label>
+                  <Input
+                    id="shipping_length_cm"
+                    type="number"
+                    min={0.1}
+                    step={0.1}
+                    value={formData.shipping_length_cm ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        shipping_length_cm: parseNullableNumber(e.target.value),
+                      }))
+                    }
+                    required
+                  />
+                </div>
               </div>
             </div>
 

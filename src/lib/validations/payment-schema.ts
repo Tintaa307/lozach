@@ -93,3 +93,5 @@ export const CreatePreferenceSchema = withShippingRefinements(
     save_info: z.boolean(),
   })
 )
+
+export const CreateBankTransferOrderSchema = CreatePreferenceSchema

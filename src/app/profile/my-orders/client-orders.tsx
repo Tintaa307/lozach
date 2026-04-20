@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import Image from "next/image"
 import { OrderItem } from "@/types/order-items/order-items"
 import { cn } from "@/lib/utils"
+import { getPaymentTypeLabel } from "@/lib/utils/payment-utils"
 import { useState, useMemo } from "react"
 import { Search } from "lucide-react"
 
@@ -153,10 +154,10 @@ export default function MyOrdersSection({ orders }: Props) {
         return true
 
       // Search by payment type
+      const paymentTypeLabel = getPaymentTypeLabel(order.payment_type)
       if (
-        order.payment_type &&
-        typeof order.payment_type === "string" &&
-        order.payment_type.toLowerCase().includes(searchLower)
+        paymentTypeLabel &&
+        paymentTypeLabel.toLowerCase().includes(searchLower)
       )
         return true
 
@@ -227,6 +228,11 @@ export default function MyOrdersSection({ orders }: Props) {
                 : "draft"
             ) as ShippingStatus
             const statusInfo = statusConfig[statusKey]
+            const shippingAmount = shipping?.shipping_cost || 0
+            const discountAmount = Math.max(
+              0,
+              order.subtotal + shippingAmount - order.total_amount
+            )
 
             return (
               <Card
@@ -372,12 +378,17 @@ export default function MyOrdersSection({ orders }: Props) {
                         <div className="flex justify-between text-neutral-800">
                           <span>Envío</span>
                           <span>
-                            {formatCurrency(
-                              shipping?.shipping_cost || 0,
-                              order.currency
-                            )}
+                            {formatCurrency(shippingAmount, order.currency)}
                           </span>
                         </div>
+                        {discountAmount > 0 && (
+                          <div className="flex justify-between text-green-700">
+                            <span>Descuento transferencia</span>
+                            <span>
+                              -{formatCurrency(discountAmount, order.currency)}
+                            </span>
+                          </div>
+                        )}
                         <Separator className="bg-neutral-200" />
                         <div className="flex justify-between text-lg font-semibold">
                           <span>Total</span>
@@ -388,9 +399,7 @@ export default function MyOrdersSection({ orders }: Props) {
                         {order.payment_type && (
                           <p className="mt-3 text-neutral-600">
                             Método de pago:{" "}
-                            {order.payment_type === "mercadopago"
-                              ? "Mercado Pago"
-                              : "Efectivo"}
+                            {getPaymentTypeLabel(order.payment_type)}
                           </p>
                         )}
                       </div>

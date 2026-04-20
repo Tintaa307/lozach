@@ -4,6 +4,7 @@ import {
   normalizeShippingMethod,
   shouldUseCorreoArgentino,
 } from "@/lib/utils/shipping-utils"
+import { ProductService } from "@/services/products/product-service"
 import { OrderItem } from "@/types/order-items/order-items"
 import { Order } from "@/types/order/order"
 import {
@@ -16,7 +17,7 @@ import {
 type QuoteParams = {
   deliveryMethod: CheckoutShippingMethod
   destinationPostalCode: string
-  items: Array<{ quantity: number }>
+  items: Array<{ id?: number; quantity: number }>
 }
 
 type AgenciesParams = {
@@ -45,6 +46,8 @@ type ParsedRate = {
   price: number | null
   estimatedDays: number | null
 }
+
+const productService = new ProductService()
 
 const PROVINCE_CODES: Record<string, string> = {
   salta: "A",
@@ -111,16 +114,17 @@ export class CorreoArgentinoService {
     const deliveredType = params.deliveryMethod === "branch" ? "S" : "D"
 
     if (!this.isQuoteConfigured()) {
-      return this.getFallbackQuote(deliveredType, params.items)
+      return await this.getFallbackQuote(deliveredType, params.items)
     }
 
     try {
+      const dimensions = await this.getPackageDimensions(params.items)
       const payload = {
         customerId: this.customerId,
         postalCodeOrigin: this.originPostalCode,
         postalCodeDestination: params.destinationPostalCode,
         deliveredType,
-        dimensions: this.getPackageDimensions(params.items),
+        dimensions,
       }
 
       const response = await this.request<unknown>("/rates", {
@@ -136,7 +140,7 @@ export class CorreoArgentinoService {
         rates.find((item) => item.deliveredType === deliveredType) || rates[0]
 
       if (!rate || rate.price === null) {
-        return this.getFallbackQuote(deliveredType, params.items)
+        return await this.getFallbackQuote(deliveredType, params.items)
       }
 
       const weightKg = payload.dimensions.weight / 1000
@@ -151,7 +155,7 @@ export class CorreoArgentinoService {
       }
     } catch (error) {
       console.error("[CorreoArgentino:quoteShipping]", error)
-      return this.getFallbackQuote(deliveredType, params.items)
+      return await this.getFallbackQuote(deliveredType, params.items)
     }
   }
 
@@ -210,8 +214,11 @@ export class CorreoArgentinoService {
 
     const sender = this.getSenderConfig()
     const recipientAddress = splitStreetAddress(params.shipping.address)
-    const { weight, height, width, length } = this.getPackageDimensions(
-      params.orderItems.map((item) => ({ quantity: item.quantity }))
+    const { weight, height, width, length } = await this.getPackageDimensions(
+      params.orderItems.map((item) => ({
+        id: item.product_id,
+        quantity: item.quantity,
+      }))
     )
 
     const payload = {
@@ -336,12 +343,12 @@ export class CorreoArgentinoService {
     }
   }
 
-  private getFallbackQuote(
+  private async getFallbackQuote(
     deliveredType: "D" | "S",
-    items: Array<{ quantity: number }>
-  ): ShippingQuote {
+    items: Array<{ id?: number; quantity: number }>
+  ): Promise<ShippingQuote> {
     const deliveryMethod = deliveredType === "S" ? "branch" : "home"
-    const metrics = this.getPackageDimensions(items)
+    const metrics = await this.getPackageDimensions(items)
 
     return {
       cost: SHIPPING_COSTS[deliveryMethod],
@@ -353,7 +360,9 @@ export class CorreoArgentinoService {
     }
   }
 
-  private getPackageDimensions(items: Array<{ quantity: number }>) {
+  private async getPackageDimensions(
+    items: Array<{ id?: number; quantity: number }>
+  ) {
     const totalItems = Math.max(
       1,
       items.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
@@ -370,12 +379,56 @@ export class CorreoArgentinoService {
     const baseLength = Number(
       process.env.CORREO_ARGENTINO_DEFAULT_LENGTH_CM || 15
     )
+    const productsById = await this.getProductsById(items)
+    let totalWeight = 0
+    let maxHeight = baseHeight
+    let maxWidth = baseWidth
+    let maxLength = baseLength
+
+    for (const item of items) {
+      const product = item.id ? productsById.get(item.id) : undefined
+      const quantity = Math.max(1, Number(item.quantity || 1))
+      const weight = product?.shipping_weight_grams || baseWeight
+      const height = product?.shipping_height_cm || baseHeight
+      const width = product?.shipping_width_cm || baseWidth
+      const length = product?.shipping_length_cm || baseLength
+
+      totalWeight += weight * quantity
+      maxHeight = Math.max(maxHeight, height)
+      maxWidth = Math.max(maxWidth, width)
+      maxLength = Math.max(maxLength, length)
+    }
 
     return {
-      weight: Math.min(25000, Math.max(1, totalItems * baseWeight)),
-      height: Math.min(150, baseHeight + Math.max(0, totalItems - 1) * 2),
-      width: Math.min(150, baseWidth),
-      length: Math.min(150, baseLength + Math.max(0, totalItems - 1) * 2),
+      weight: Math.min(
+        25000,
+        Math.max(1, totalWeight || totalItems * baseWeight)
+      ),
+      height: Math.min(150, maxHeight + Math.max(0, totalItems - 1) * 2),
+      width: Math.min(150, maxWidth),
+      length: Math.min(150, maxLength + Math.max(0, totalItems - 1) * 2),
+    }
+  }
+
+  private async getProductsById(items: Array<{ id?: number }>) {
+    const ids = Array.from(
+      new Set(
+        items
+          .map((item) => item.id)
+          .filter((id): id is number => typeof id === "number")
+      )
+    )
+
+    if (ids.length === 0) {
+      return new Map()
+    }
+
+    try {
+      const products = await productService.getProductsByIds(ids)
+      return new Map(products.map((product) => [product.id, product]))
+    } catch (error) {
+      console.error("[CorreoArgentino:getProductsById]", error)
+      return new Map()
     }
   }
 

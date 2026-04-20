@@ -8,6 +8,7 @@ const schema = z.object({
   products: z
     .array(
       z.object({
+        id: z.number().optional(),
         quantity: z.number().int().positive(),
       })
     )

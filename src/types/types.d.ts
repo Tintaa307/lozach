@@ -16,6 +16,10 @@ export interface Product {
   image_url: string | null
   images_urls: string[]
   sku: string
+  shipping_weight_grams: number | null
+  shipping_height_cm: number | null
+  shipping_width_cm: number | null
+  shipping_length_cm: number | null
 }
 
 export interface PublicUser {

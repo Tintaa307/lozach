@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
-import { Product } from "@/types/types"
 import {
   CreateProductValues,
+  Product,
   ProductFilters,
   UpdateProductValues,
 } from "@/types/products/types"
@@ -198,7 +198,9 @@ export class ProductRepository {
 
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, image_url, category, color, size, fabric, sku")
+        .select(
+          "id, name, price, image_url, category, color, size, fabric, sku, shipping_weight_grams, shipping_height_cm, shipping_width_cm, shipping_length_cm"
+        )
         .in("id", ids)
 
       if (error) {
@@ -241,7 +243,9 @@ export class ProductRepository {
 
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, image_url, category, color, size, fabric, sku")
+        .select(
+          "id, name, price, image_url, category, color, size, fabric, sku, shipping_weight_grams, shipping_height_cm, shipping_width_cm, shipping_length_cm"
+        )
         .in("name", names)
         .limit(6)
 
@@ -307,6 +311,10 @@ export class ProductRepository {
         size: values.size,
         image_url: values.image_url || null,
         images_urls: values.images_urls || [],
+        shipping_weight_grams: values.shipping_weight_grams ?? null,
+        shipping_height_cm: values.shipping_height_cm ?? null,
+        shipping_width_cm: values.shipping_width_cm ?? null,
+        shipping_length_cm: values.shipping_length_cm ?? null,
         created_at: new Date().toISOString(),
         sku:
           values.name.slice(0, 3).toUpperCase() +

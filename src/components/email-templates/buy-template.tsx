@@ -1,4 +1,5 @@
 import { EmailBody } from "@/types/email/email"
+import { getPaymentTypeLabel } from "@/lib/utils/payment-utils"
 import { ShippingStatus } from "@/types/shipping/shipping"
 import {
   Body,
@@ -72,6 +73,11 @@ export default function OrderConfirmationEmail({
     0,
     8
   )} ha sido confirmado.`
+  const shippingAmount = shipping?.shipping_cost || 0
+  const discountAmount = Math.max(
+    0,
+    order.subtotal + shippingAmount - order.total_amount
+  )
 
   const logoUrl = "https://lozachurban.store/logo-big.png"
 
@@ -130,7 +136,9 @@ export default function OrderConfirmationEmail({
             <Row style={summaryRow}>
               <Column>
                 <Text style={summaryLabel}>Método de Pago</Text>
-                <Text style={summaryValue}>Mercado Pago</Text>
+                <Text style={summaryValue}>
+                  {getPaymentTypeLabel(order.payment_type)}
+                </Text>
               </Column>
             </Row>
 
@@ -153,10 +161,23 @@ export default function OrderConfirmationEmail({
               </Column>
               <Column align="right">
                 <Text style={totalValue}>
-                  {formatMoney(shipping?.shipping_cost || 0, order.currency)}
+                  {formatMoney(shippingAmount, order.currency)}
                 </Text>
               </Column>
             </Row>
+
+            {discountAmount > 0 && (
+              <Row style={totalRow}>
+                <Column>
+                  <Text style={discountLabel}>Descuento transferencia</Text>
+                </Column>
+                <Column align="right">
+                  <Text style={discountValue}>
+                    -{formatMoney(discountAmount, order.currency)}
+                  </Text>
+                </Column>
+              </Row>
+            )}
 
             <Hr style={cardDivider} />
 
@@ -470,6 +491,18 @@ const totalLabel = {
 const totalValue = {
   fontSize: "15px",
   color: "#111111",
+  margin: "0",
+}
+
+const discountLabel = {
+  fontSize: "15px",
+  color: "#047857",
+  margin: "0",
+}
+
+const discountValue = {
+  fontSize: "15px",
+  color: "#047857",
   margin: "0",
 }
 

@@ -582,8 +582,13 @@ export class CorreoArgentinoService {
     agencies: CorreoArgentinoAgency[],
     params: AgenciesParams
   ): CorreoArgentinoAgency[] {
+    const postalCode = getNumericPostalCode(params.postalCode || "")
     const city = normalizeText(params.city || "")
     let candidates = agencies
+
+    if (postalCode.length >= 2) {
+      candidates = this.filterByPostalCodeProximity(candidates, postalCode)
+    }
 
     if (city) {
       const cityMatches = candidates.filter((agency) => {
@@ -601,11 +606,35 @@ export class CorreoArgentinoService {
     return candidates.filter((agency) => agency.code)
   }
 
+  private filterByPostalCodeProximity(
+    agencies: CorreoArgentinoAgency[],
+    postalCode: string
+  ): CorreoArgentinoAgency[] {
+    const minPrefixLength = 2
+
+    for (
+      let prefixLength = postalCode.length;
+      prefixLength >= minPrefixLength;
+      prefixLength--
+    ) {
+      const prefix = postalCode.slice(0, prefixLength)
+      const matches = agencies.filter((agency) =>
+        getNumericPostalCode(agency.postalCode).startsWith(prefix)
+      )
+
+      if (matches.length > 0) {
+        return matches
+      }
+    }
+
+    return agencies
+  }
+
   private rankAgencies(
     agencies: CorreoArgentinoAgency[],
     params: AgenciesParams
   ): CorreoArgentinoAgency[] {
-    const postalCode = normalizeText(params.postalCode || "")
+    const postalCode = getNumericPostalCode(params.postalCode || "")
     const city = normalizeText(params.city || "")
 
     return [...agencies].sort((left, right) => {
@@ -623,8 +652,16 @@ export class CorreoArgentinoService {
   ): number {
     let score = 0
 
-    if (postalCode && normalizeText(agency.postalCode) === postalCode) {
-      score += 4
+    if (postalCode) {
+      const agencyPostalCode = getNumericPostalCode(agency.postalCode)
+
+      if (agencyPostalCode === postalCode) {
+        score += 6
+      } else if (agencyPostalCode.startsWith(postalCode.slice(0, 3))) {
+        score += 3
+      } else if (agencyPostalCode.startsWith(postalCode.slice(0, 2))) {
+        score += 1
+      }
     }
 
     const agencyCity = normalizeText(agency.city)
@@ -714,6 +751,10 @@ export class CorreoArgentinoService {
 
     return payload
   }
+}
+
+function getNumericPostalCode(value: string): string {
+  return value.replace(/\D/g, "")
 }
 
 function normalizeText(value: string): string {

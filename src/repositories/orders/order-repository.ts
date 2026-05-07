@@ -100,6 +100,52 @@ export class OrderRepository {
     return
   }
 
+  async getOrderById(id: string): Promise<Order> {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single()
+
+    if (error) {
+      throw new OrderNotFoundException(error.message, "Orden no encontrada")
+    }
+
+    if (!data) {
+      throw new OrderNotFoundException(
+        "Orden no encontrada",
+        "Orden no encontrada"
+      )
+    }
+
+    return data as Order
+  }
+
+  async getOrderWithItemsById(id: string): Promise<OrderWithItems> {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, order_items(*), shipping(*)")
+      .eq("id", id)
+      .single()
+
+    if (error) {
+      throw new OrderNotFoundException(error.message, "Orden no encontrada")
+    }
+
+    if (!data) {
+      throw new OrderNotFoundException(
+        "Orden no encontrada",
+        "Orden no encontrada"
+      )
+    }
+
+    return data as OrderWithItems
+  }
+
   async getAllOrders(): Promise<OrderWithItems[]> {
     const supabase = createAdminClient()
 

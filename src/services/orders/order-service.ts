@@ -37,6 +37,14 @@ export class OrderService {
     )
   }
 
+  async getOrderById(id: string): Promise<Order> {
+    return await this.orderRepository.getOrderById(id)
+  }
+
+  async getOrderWithItemsById(id: string): Promise<OrderWithItems> {
+    return await this.orderRepository.getOrderWithItemsById(id)
+  }
+
   async updateOrder(id: string, order: UpdateOrderValues): Promise<void> {
     return await this.orderRepository.updateOrder(id, order)
   }

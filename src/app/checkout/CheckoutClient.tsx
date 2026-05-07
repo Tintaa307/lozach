@@ -8,15 +8,20 @@ import { toast } from "sonner"
 
 import {
   createBankTransferOrder,
+  createCashStoreOrder,
   createPreference,
 } from "@/controllers/payment/payment-controller"
 import { useCart } from "@/context/CartContext"
 import { actionErrorHandler } from "@/lib/handlers/actionErrorHandler"
 import { PaymentSchema } from "@/lib/validations/payment-schema"
 import {
+  BANK_TRANSFER_DISCOUNT_PERCENT_LABEL,
   BANK_TRANSFER_PAYMENT_TYPE,
+  CASH_STORE_DISCOUNT_PERCENT_LABEL,
+  CASH_STORE_PAYMENT_TYPE,
   MERCADO_PAGO_PAYMENT_TYPE,
   calculateBankTransferDiscount,
+  calculateCashStoreDiscount,
 } from "@/lib/utils/payment-utils"
 import { Address } from "@/types/address/address"
 import { AppActionException } from "@/types/exceptions"
@@ -58,6 +63,7 @@ type CheckoutForm = {
 type CheckoutPaymentMethod =
   | typeof MERCADO_PAGO_PAYMENT_TYPE
   | typeof BANK_TRANSFER_PAYMENT_TYPE
+  | typeof CASH_STORE_PAYMENT_TYPE
 
 const EMPTY_FORM = {
   identifier: "",
@@ -151,6 +157,12 @@ export default function CheckoutClient({
       }))
     }
   }, [method])
+
+  useEffect(() => {
+    if (method !== "store" && paymentMethod === CASH_STORE_PAYMENT_TYPE) {
+      setPaymentMethod(MERCADO_PAGO_PAYMENT_TYPE)
+    }
+  }, [method, paymentMethod])
 
   useEffect(() => {
     if (method === "store") {
@@ -297,7 +309,12 @@ export default function CheckoutClient({
     paymentMethod === BANK_TRANSFER_PAYMENT_TYPE
       ? calculateBankTransferDiscount(subtotal)
       : 0
-  const total = subtotal - transferDiscount + (shippingCost ?? 0)
+  const cashStoreDiscount =
+    paymentMethod === CASH_STORE_PAYMENT_TYPE
+      ? calculateCashStoreDiscount(subtotal)
+      : 0
+  const total =
+    subtotal - transferDiscount - cashStoreDiscount + (shippingCost ?? 0)
   const selectedAgency = agencies.find(
     (agency) => agency.code === formData.agency_code
   )
@@ -401,6 +418,28 @@ export default function CheckoutClient({
       if (paymentMethod === BANK_TRANSFER_PAYMENT_TYPE) {
         const order = await actionErrorHandler(async () =>
           createBankTransferOrder(paymentPayload)
+        )
+
+        if (order.success && order.data) {
+          clearCart()
+          router.push(order.data.redirect_url)
+          return
+        }
+
+        toast.error(order.message || "No se pudo crear el pedido.")
+        return
+      }
+
+      if (paymentMethod === CASH_STORE_PAYMENT_TYPE) {
+        if (method !== "store") {
+          toast.error(
+            "El pago en efectivo requiere retiro en tienda."
+          )
+          return
+        }
+
+        const order = await actionErrorHandler(async () =>
+          createCashStoreOrder(paymentPayload)
         )
 
         if (order.success && order.data) {
@@ -737,14 +776,49 @@ export default function CheckoutClient({
                         Transferencia bancaria
                       </Label>
                       <span className="text-sm font-medium text-green-700">
-                        20% OFF
+                        {BANK_TRANSFER_DISCOUNT_PERCENT_LABEL} OFF
+                      </span>
+                    </div>
+                    <div
+                      className={`flex items-center space-x-2 rounded-lg border p-3 ${
+                        method === "store"
+                          ? "border-green-200 bg-green-50"
+                          : "border-gray-200 bg-gray-50 opacity-60"
+                      }`}
+                    >
+                      <RadioGroupItem
+                        value={CASH_STORE_PAYMENT_TYPE}
+                        id="payment-cash-store"
+                        disabled={method !== "store"}
+                      />
+                      <Label
+                        htmlFor="payment-cash-store"
+                        className="flex-1 cursor-pointer"
+                      >
+                        Efectivo en tienda (al retirar)
+                      </Label>
+                      <span className="text-sm font-medium text-green-700">
+                        {CASH_STORE_DISCOUNT_PERCENT_LABEL} OFF
                       </span>
                     </div>
                   </RadioGroup>
                   {paymentMethod === BANK_TRANSFER_PAYMENT_TYPE && (
                     <p className="text-sm text-gray-600">
                       El descuento se aplica sobre los productos. El envío se
-                      suma aparte.
+                      suma aparte. Tendrás 20 minutos para enviar el
+                      comprobante.
+                    </p>
+                  )}
+                  {paymentMethod === CASH_STORE_PAYMENT_TYPE && (
+                    <p className="text-sm text-gray-600">
+                      Pagás en efectivo cuando retires el pedido en la tienda.
+                      Solo disponible con retiro en tienda.
+                    </p>
+                  )}
+                  {method !== "store" && (
+                    <p className="text-xs text-gray-500">
+                      El pago en efectivo solo está disponible si elegís Retiro
+                      en tienda.
                     </p>
                   )}
                 </CardContent>
@@ -786,8 +860,20 @@ export default function CheckoutClient({
                   </div>
                   {paymentMethod === BANK_TRANSFER_PAYMENT_TYPE && (
                     <div className="flex justify-between text-green-700">
-                      <span>Descuento transferencia (20%)</span>
+                      <span>
+                        Descuento transferencia (
+                        {BANK_TRANSFER_DISCOUNT_PERCENT_LABEL})
+                      </span>
                       <span>-{formatCurrency(transferDiscount)}</span>
+                    </div>
+                  )}
+                  {paymentMethod === CASH_STORE_PAYMENT_TYPE && (
+                    <div className="flex justify-between text-green-700">
+                      <span>
+                        Descuento efectivo (
+                        {CASH_STORE_DISCOUNT_PERCENT_LABEL})
+                      </span>
+                      <span>-{formatCurrency(cashStoreDiscount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
@@ -846,7 +932,9 @@ export default function CheckoutClient({
                     <span className="flex items-center justify-center gap-2">
                       {paymentMethod === BANK_TRANSFER_PAYMENT_TYPE
                         ? "Crear pedido por transferencia"
-                        : "Proceder al pago"}{" "}
+                        : paymentMethod === CASH_STORE_PAYMENT_TYPE
+                          ? "Reservar pedido para retirar"
+                          : "Proceder al pago"}{" "}
                       <ArrowRight className="w-4 h-4" />
                     </span>
                   )}

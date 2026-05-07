@@ -26,6 +26,16 @@ export const createBankTransferOrder = async (
   })
 }
 
+export const createCashStoreOrder = async (
+  values: CreatePreferenceValues
+) => {
+  return actionHandler(async () => {
+    const result = await paymentService.createCashStoreOrder(values)
+
+    return result
+  })
+}
+
 export const verifyPaymentStatus = async (externalReference: string) => {
   return actionHandler(async () => {
     const order =

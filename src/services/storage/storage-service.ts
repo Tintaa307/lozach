@@ -99,6 +99,62 @@ export class StorageService {
     }
   }
 
+  async uploadPaymentProof(
+    orderId: string,
+    file: File
+  ): Promise<{ proof_url: string; storage_path: string }> {
+    try {
+      const supabase = await createClient()
+      const fileExt = (file.name.split(".").pop() || "bin").toLowerCase()
+      const fileName = `${Date.now()}.${fileExt}`
+      const filePath = `${orderId}/${fileName}`
+
+      const arrayBuffer = await file.arrayBuffer()
+      const fileBuffer = Buffer.from(arrayBuffer)
+
+      const { data, error } = await supabase.storage
+        .from("payment-proofs")
+        .upload(filePath, fileBuffer, {
+          upsert: true,
+          contentType: file.type || "application/octet-stream",
+          cacheControl: "3600",
+        })
+
+      if (error) {
+        console.error("[StorageService] payment-proof upload error", error)
+        throw new StorageException(
+          `Error al subir comprobante: ${error.message}`,
+          "Error al subir el comprobante"
+        )
+      }
+
+      if (!data) {
+        throw new StorageException(
+          "No se recibió respuesta al subir el comprobante",
+          "Error al subir el comprobante"
+        )
+      }
+
+      const { data: publicData } = supabase.storage
+        .from("payment-proofs")
+        .getPublicUrl(data.path)
+
+      return {
+        proof_url: publicData.publicUrl,
+        storage_path: data.path,
+      }
+    } catch (error) {
+      console.error("[StorageService] payment-proof upload error", error)
+      if (error instanceof StorageException) {
+        throw error
+      }
+      throw new StorageException(
+        "Error interno al subir comprobante",
+        "Error al subir el comprobante"
+      )
+    }
+  }
+
   async deleteProductImages(productId: number): Promise<void> {
     try {
       const supabase = await createClient()

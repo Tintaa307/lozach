@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -22,9 +23,21 @@ import {
   Palette,
   Ruler,
   ShoppingBag,
+  FileText,
+  Loader2,
+  ExternalLink,
 } from "lucide-react"
+import { toast } from "sonner"
 import { OrderWithItems } from "@/types/order/order"
-import { getPaymentTypeLabel } from "@/lib/utils/payment-utils"
+import {
+  BANK_TRANSFER_PAYMENT_TYPE,
+  getPaymentTypeLabel,
+} from "@/lib/utils/payment-utils"
+import {
+  approveBankTransferOrder,
+  rejectBankTransferOrder,
+} from "@/controllers/admin/admin-transfer-controller"
+import { useRouter } from "next/navigation"
 
 const statusConfig: Record<
   string,
@@ -104,11 +117,62 @@ interface OrdersTableClientProps {
   orders: OrderWithItems[]
 }
 
+type ReviewState = "idle" | "approving" | "rejecting"
+
 export function OrdersTableClient({ orders }: OrdersTableClientProps) {
+  const router = useRouter()
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
+  const [reviewState, setReviewState] = useState<
+    Record<string, ReviewState>
+  >({})
+  const [rejectReason, setRejectReason] = useState<Record<string, string>>({})
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId))
+  }
+
+  const setOrderReviewState = (orderId: string, value: ReviewState) => {
+    setReviewState((prev) => ({ ...prev, [orderId]: value }))
+  }
+
+  const handleApprove = async (orderId: string) => {
+    setOrderReviewState(orderId, "approving")
+    try {
+      const result = await approveBankTransferOrder(orderId)
+      if (result.success) {
+        toast.success("Orden aprobada. Se envió el email al cliente.")
+        router.refresh()
+      } else {
+        toast.error(result.message || "No se pudo aprobar la orden.")
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error inesperado."
+      toast.error(message)
+    } finally {
+      setOrderReviewState(orderId, "idle")
+    }
+  }
+
+  const handleReject = async (orderId: string) => {
+    const reason = rejectReason[orderId]?.trim() || undefined
+    setOrderReviewState(orderId, "rejecting")
+    try {
+      const result = await rejectBankTransferOrder(orderId, reason)
+      if (result.success) {
+        toast.success("Comprobante rechazado. Se notificó al cliente.")
+        setRejectReason((prev) => ({ ...prev, [orderId]: "" }))
+        router.refresh()
+      } else {
+        toast.error(result.message || "No se pudo rechazar el comprobante.")
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error inesperado."
+      toast.error(message)
+    } finally {
+      setOrderReviewState(orderId, "idle")
+    }
   }
 
   if (orders.length === 0) {
@@ -351,6 +415,156 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
                         <p className="text-sm text-muted-foreground py-2">
                           No hay productos registrados para esta orden
                         </p>
+                      )}
+
+                      {order.payment_type === BANK_TRANSFER_PAYMENT_TYPE && (
+                        <div className="mt-6 rounded-lg border bg-background p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">
+                              Comprobante de transferencia
+                            </span>
+                            {order.payment_proof_status && (
+                              <Badge
+                                variant="outline"
+                                className={`gap-1.5 font-medium ${
+                                  order.payment_proof_status === "approved"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    : order.payment_proof_status === "rejected"
+                                      ? "bg-red-50 text-red-700 border-red-200"
+                                      : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}
+                              >
+                                {order.payment_proof_status === "approved"
+                                  ? "Aprobado"
+                                  : order.payment_proof_status === "rejected"
+                                    ? "Rechazado"
+                                    : "Pendiente de revisión"}
+                              </Badge>
+                            )}
+                          </div>
+
+                          {order.payment_proof_url ? (
+                            <>
+                              <div className="grid gap-3 sm:grid-cols-[160px_1fr] items-start">
+                                <div className="rounded-md overflow-hidden border bg-muted aspect-square flex items-center justify-center">
+                                  {/\.pdf$/i.test(
+                                    order.payment_proof_url
+                                  ) ? (
+                                    <FileText className="h-10 w-10 text-muted-foreground" />
+                                  ) : (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={order.payment_proof_url}
+                                      alt="Comprobante de transferencia"
+                                      className="object-cover w-full h-full"
+                                    />
+                                  )}
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                  <a
+                                    href={order.payment_proof_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+                                  >
+                                    Abrir comprobante
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                  {order.payment_proof_uploaded_at && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Subido el{" "}
+                                      {formatDate(
+                                        order.payment_proof_uploaded_at
+                                      )}{" "}
+                                      a las{" "}
+                                      {formatTime(
+                                        order.payment_proof_uploaded_at
+                                      )}
+                                    </p>
+                                  )}
+                                  {order.payment_proof_rejection_reason &&
+                                    order.payment_proof_status === "rejected" && (
+                                      <p className="text-xs text-red-600">
+                                        Motivo previo:{" "}
+                                        {order.payment_proof_rejection_reason}
+                                      </p>
+                                    )}
+                                </div>
+                              </div>
+
+                              {order.payment_proof_status !== "approved" && (
+                                <div className="space-y-2 pt-1">
+                                  <textarea
+                                    placeholder="Motivo del rechazo (opcional, se envía al cliente)"
+                                    value={rejectReason[order.id] || ""}
+                                    onChange={(e) =>
+                                      setRejectReason((prev) => ({
+                                        ...prev,
+                                        [order.id]: e.target.value,
+                                      }))
+                                    }
+                                    className="w-full text-sm rounded-md border border-input bg-background px-3 py-2 resize-none min-h-[60px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    disabled={
+                                      reviewState[order.id] !== undefined &&
+                                      reviewState[order.id] !== "idle"
+                                    }
+                                  />
+                                  <div className="flex gap-2 flex-wrap">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      onClick={() => handleApprove(order.id)}
+                                      disabled={
+                                        reviewState[order.id] !== undefined &&
+                                        reviewState[order.id] !== "idle"
+                                      }
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    >
+                                      {reviewState[order.id] === "approving" ? (
+                                        <span className="flex items-center gap-1">
+                                          Aprobando
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        </span>
+                                      ) : (
+                                        <span className="flex items-center gap-1">
+                                          <CircleCheck className="h-3.5 w-3.5" />
+                                          Aprobar pago
+                                        </span>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleReject(order.id)}
+                                      disabled={
+                                        reviewState[order.id] !== undefined &&
+                                        reviewState[order.id] !== "idle"
+                                      }
+                                    >
+                                      {reviewState[order.id] === "rejecting" ? (
+                                        <span className="flex items-center gap-1">
+                                          Rechazando
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        </span>
+                                      ) : (
+                                        <span className="flex items-center gap-1">
+                                          <CircleX className="h-3.5 w-3.5" />
+                                          Rechazar
+                                        </span>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              El cliente todavía no subió el comprobante.
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   </TableCell>

@@ -1,6 +1,17 @@
 export const MERCADO_PAGO_PAYMENT_TYPE = "mercadopago"
 export const BANK_TRANSFER_PAYMENT_TYPE = "bank_transfer"
-export const BANK_TRANSFER_DISCOUNT_RATE = 0.2
+export const CASH_STORE_PAYMENT_TYPE = "cash_store"
+export const BANK_TRANSFER_DISCOUNT_RATE = 0.1
+export const CASH_STORE_DISCOUNT_RATE = 0.2
+
+export const TRANSFER_PAYMENT_WINDOW_MS = 20 * 60 * 1000
+
+export const BANK_TRANSFER_DISCOUNT_PERCENT_LABEL = `${Math.round(
+  BANK_TRANSFER_DISCOUNT_RATE * 100
+)}%`
+export const CASH_STORE_DISCOUNT_PERCENT_LABEL = `${Math.round(
+  CASH_STORE_DISCOUNT_RATE * 100
+)}%`
 
 export function calculateBankTransferDiscount(subtotal: number): number {
   return Math.round(Math.max(0, subtotal) * BANK_TRANSFER_DISCOUNT_RATE)
@@ -15,6 +26,16 @@ export function calculateBankTransferTotal(
   return Math.max(0, subtotal - discount + Math.max(0, shippingCost))
 }
 
+export function calculateCashStoreDiscount(subtotal: number): number {
+  return Math.round(Math.max(0, subtotal) * CASH_STORE_DISCOUNT_RATE)
+}
+
+export function calculateCashStoreTotal(subtotal: number): number {
+  const discount = calculateCashStoreDiscount(subtotal)
+
+  return Math.max(0, subtotal - discount)
+}
+
 export function getPaymentTypeLabel(paymentType?: string | null): string {
   if (paymentType === MERCADO_PAGO_PAYMENT_TYPE) {
     return "Mercado Pago"
@@ -22,6 +43,10 @@ export function getPaymentTypeLabel(paymentType?: string | null): string {
 
   if (paymentType === BANK_TRANSFER_PAYMENT_TYPE) {
     return "Transferencia bancaria"
+  }
+
+  if (paymentType === CASH_STORE_PAYMENT_TYPE) {
+    return "Efectivo en tienda"
   }
 
   return paymentType || "Sin método"

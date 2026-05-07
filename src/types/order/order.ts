@@ -6,6 +6,8 @@ export interface OrderWithItems extends Order {
   shipping?: Shipping[]
 }
 
+export type PaymentProofStatus = "pending_review" | "approved" | "rejected"
+
 export interface Order {
   id: string
   created_at: string
@@ -23,6 +25,13 @@ export interface Order {
   email_sent?: boolean
   processed_at?: string | null
   expires_at?: string | null
+  payment_proof_url?: string | null
+  payment_proof_uploaded_at?: string | null
+  payment_proof_status?: PaymentProofStatus | null
+  payment_proof_reviewed_at?: string | null
+  payment_proof_reviewed_by?: string | null
+  payment_proof_rejection_reason?: string | null
+  reserved_at?: string | null
 }
 
 export interface CreateOrderValues {
@@ -52,4 +61,11 @@ export interface UpdateOrderValues {
   processed_at?: string | null
   expires_at?: string | null
   updated_at?: string | null
+  payment_proof_url?: string | null
+  payment_proof_uploaded_at?: string | null
+  payment_proof_status?: PaymentProofStatus | null
+  payment_proof_reviewed_at?: string | null
+  payment_proof_reviewed_by?: string | null
+  payment_proof_rejection_reason?: string | null
+  reserved_at?: string | null
 }

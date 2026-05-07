@@ -8,6 +8,7 @@ import {
 } from "@/lib/validations/payment-schema"
 import {
   CreateBankTransferOrderResponse,
+  CreateCashStoreOrderResponse,
   CreatePreferenceResponse,
   CreatePreferenceValues,
   UpdatePreferenceValues,
@@ -29,6 +30,7 @@ import {
 import { ShippingService } from "../shipping/shipping-service"
 import { Order } from "@/types/order/order"
 import { EmailService } from "../email/email-service"
+import { StorageService } from "../storage/storage-service"
 import { Product } from "@/types/types"
 import { createClient as createAdminClient } from "@/lib/supabase/admin-client"
 import { CreateShippingValues } from "@/types/shipping/shipping"
@@ -41,9 +43,13 @@ import {
 } from "@/lib/utils/shipping-utils"
 import {
   BANK_TRANSFER_PAYMENT_TYPE,
+  CASH_STORE_PAYMENT_TYPE,
   MERCADO_PAGO_PAYMENT_TYPE,
+  TRANSFER_PAYMENT_WINDOW_MS,
   calculateBankTransferDiscount,
   calculateBankTransferTotal,
+  calculateCashStoreDiscount,
+  calculateCashStoreTotal,
 } from "@/lib/utils/payment-utils"
 
 const userService = new AuthService()
@@ -54,6 +60,7 @@ const orderItemsService = new OrderItemsService()
 const shippingService = new ShippingService()
 const emailService = new EmailService()
 const correoArgentinoService = new CorreoArgentinoService()
+const storageService = new StorageService()
 
 export class PaymentService {
   private client: Preference | null = null
@@ -432,7 +439,9 @@ export class PaymentService {
         external_reference: request_id,
         currency: "ARS",
         phone: phone,
-        expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+        expires_at: new Date(
+          Date.now() + TRANSFER_PAYMENT_WINDOW_MS
+        ).toISOString(),
       })
       createdOrderId = order.id
 
@@ -545,6 +554,212 @@ export class PaymentService {
       throw new PaymentCreationException(
         (error as Error).message,
         "Error al crear la orden por transferencia. Por favor intente nuevamente."
+      )
+    }
+  }
+
+  async createCashStoreOrder(
+    body: CreatePreferenceValues
+  ): Promise<CreateCashStoreOrderResponse> {
+    const {
+      products,
+      identifier,
+      address,
+      details,
+      postal_code,
+      city,
+      state,
+      phone,
+      shipping_method,
+      save_info,
+    } = body
+
+    if (shipping_method !== "store") {
+      throw new InvalidPreferenceDataException(
+        "El pago en efectivo requiere retiro en tienda",
+        "El pago en efectivo solo está disponible con retiro en tienda."
+      )
+    }
+
+    const validatedData = CreateBankTransferOrderSchema.safeParse(body)
+
+    if (!validatedData.success) {
+      throw new InvalidPreferenceDataException(
+        validatedData.error.message,
+        "Revisa la información de los campos",
+        validatedData.error.flatten().fieldErrors as Record<string, string[]>
+      )
+    }
+
+    const user = await userService.getUser()
+
+    if (!user) {
+      throw new AuthMissingUserException(
+        "No hay una sesión iniciada",
+        "No hay una sesión iniciada"
+      )
+    }
+
+    let totalAmount = 0
+    const order_items = []
+
+    for (const cartItem of products) {
+      if (!cartItem.id) {
+        throw new ValidationException("ID de producto no proporcionado")
+      }
+
+      const product = await productService.getProductById(cartItem.id)
+
+      if (!product) {
+        throw new ProductNotFoundException(
+          "Producto no encontrado",
+          "Producto no encontrado"
+        )
+      }
+
+      const totalPrice = product.price * cartItem.quantity
+      totalAmount += totalPrice
+
+      order_items.push({
+        product_id: product.id,
+        color: cartItem.color,
+        size: cartItem.size,
+        product_name: product.name,
+        quantity: cartItem.quantity,
+        unit_price: product.price,
+        sku: product.sku,
+      })
+    }
+
+    const discountAmount = calculateCashStoreDiscount(totalAmount)
+    const finalTotalAmount = calculateCashStoreTotal(totalAmount)
+    const request_id = `${user.id}-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`
+
+    let createdOrderId: string | null = null
+
+    try {
+      const order = await orderService.createOrder({
+        user_id: user.id,
+        total_amount: finalTotalAmount,
+        subtotal: totalAmount,
+        payment_id: null,
+        payment_type: CASH_STORE_PAYMENT_TYPE,
+        collection_id: null,
+        collection_status: "pending",
+        external_reference: request_id,
+        currency: "ARS",
+        phone: phone,
+        expires_at: null,
+      })
+      createdOrderId = order.id
+
+      if (save_info) {
+        await addressesService.createAddress({
+          address,
+          details,
+          postal_code: Number(postal_code) || 0,
+          city,
+          state,
+          phone,
+          identifier: Number(identifier),
+          order_id: order.id,
+          user_id: user.id,
+        })
+      }
+
+      for (const item of order_items) {
+        try {
+          await orderItemsService.createOrderItem({
+            order_id: order.id,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            sku: item.sku,
+            currency: "ARS" as const,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            color: item.color,
+            size: item.size,
+          })
+        } catch (error) {
+          throw new OrderItemsCreationException(
+            (error as Error).message,
+            "Error al crear el item de la orden. Por favor intente nuevamente."
+          )
+        }
+      }
+
+      const shippingPayload: CreateShippingValues = {
+        address: address || "Retiro en tienda",
+        details: details || "Pago en efectivo al retirar",
+        postal_code: Number(postal_code) || 0,
+        city: city || "",
+        state: state || "",
+        phone,
+        identifier: Number(identifier),
+        order_id: order.id,
+        user_id: user.id,
+        shipping_method,
+        shipping_cost: 0,
+        shipping_status: "ready",
+        provider: "CA",
+      }
+
+      await shippingService.createShipping(shippingPayload)
+
+      try {
+        const userInfo = await userService.getUserById(order.user_id)
+        await emailService.sendAdminOrderNotificationEmail({
+          customerName: userInfo.name,
+          customerEmail: userInfo.email,
+          order,
+          orderItems: order_items.map((item) => ({
+            id: crypto.randomUUID(),
+            order_id: order.id,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            sku: item.sku,
+            currency: "ARS",
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            color: item.color,
+            size: item.size,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })),
+          shipping: shippingPayload,
+        })
+      } catch (error) {
+        console.error("Error sending admin order notification:", error)
+      }
+
+      const params = new URLSearchParams({
+        payment_method: CASH_STORE_PAYMENT_TYPE,
+        external_reference: request_id,
+        amount: String(finalTotalAmount),
+      })
+
+      return {
+        redirect_url: `/payment/pending?${params.toString()}`,
+        external_reference: request_id,
+        total_amount: finalTotalAmount,
+        discount_amount: discountAmount,
+      }
+    } catch (error) {
+      if (createdOrderId) {
+        await this.cleanupFailedOrderCreation(createdOrderId)
+      }
+
+      console.error("[CashStore:create_order]", {
+        userId: user.id,
+        shippingMethod: shipping_method,
+        error,
+      })
+
+      throw new PaymentCreationException(
+        (error as Error).message,
+        "Error al crear el pedido. Por favor intente nuevamente."
       )
     }
   }
@@ -667,6 +882,170 @@ export class PaymentService {
       order,
       shipping,
     })
+  }
+
+  async uploadBankTransferProof(
+    externalReference: string,
+    file: File
+  ): Promise<{ proof_url: string; order_id: string }> {
+    const user = await userService.getUser()
+
+    if (!user) {
+      throw new AuthMissingUserException(
+        "No hay una sesión iniciada",
+        "No hay una sesión iniciada"
+      )
+    }
+
+    const order = await orderService.getOrderByExternalReferenceAdmin(
+      externalReference
+    )
+
+    if (order.user_id !== user.id) {
+      throw new ValidationException("No podés modificar esta orden.")
+    }
+
+    if (order.payment_type !== BANK_TRANSFER_PAYMENT_TYPE) {
+      throw new ValidationException(
+        "Esta orden no se paga por transferencia bancaria."
+      )
+    }
+
+    if (order.payment_proof_status === "approved") {
+      throw new ValidationException("Esta orden ya fue aprobada.")
+    }
+
+    const { proof_url } = await storageService.uploadPaymentProof(
+      order.id,
+      file
+    )
+
+    const now = new Date().toISOString()
+
+    await orderService.updateOrder(order.id, {
+      payment_proof_url: proof_url,
+      payment_proof_uploaded_at: now,
+      payment_proof_status: "pending_review",
+      payment_proof_reviewed_at: null,
+      payment_proof_reviewed_by: null,
+      payment_proof_rejection_reason: null,
+      reserved_at: order.reserved_at ?? now,
+      expires_at: null,
+      updated_at: now,
+    })
+
+    try {
+      const customer = await userService.getUserById(order.user_id)
+      await emailService.sendTransferReservedEmail({
+        email: customer.email,
+        name: customer.name,
+        order: { ...order, reserved_at: order.reserved_at ?? now },
+      })
+    } catch (error) {
+      console.error("[BankTransfer:reservedEmail]", error)
+    }
+
+    return { proof_url, order_id: order.id }
+  }
+
+  async approveBankTransferOrder(orderId: string): Promise<void> {
+    const adminUser = await userService.getUser()
+    if (!adminUser || adminUser.role !== "admin") {
+      throw new ValidationException("Solo administradores.")
+    }
+
+    const order = await orderService.getOrderById(orderId)
+
+    if (order.payment_type !== BANK_TRANSFER_PAYMENT_TYPE) {
+      throw new ValidationException(
+        "Esta orden no se paga por transferencia bancaria."
+      )
+    }
+
+    if (!order.payment_proof_url) {
+      throw new ValidationException(
+        "La orden no tiene comprobante cargado."
+      )
+    }
+
+    const now = new Date().toISOString()
+
+    await orderService.updateOrder(order.id, {
+      payment_proof_status: "approved",
+      payment_proof_reviewed_at: now,
+      payment_proof_reviewed_by: adminUser.id,
+      payment_proof_rejection_reason: null,
+      collection_status: "approved",
+      processed_at: now,
+      expires_at: null,
+      updated_at: now,
+    })
+
+    const refreshedOrder = await orderService.getOrderById(order.id)
+
+    const shipping = await shippingService.findShippingByOrderId(order.id)
+    if (shipping) {
+      await shippingService.updateShipping(order.id, {
+        order_id: order.id,
+        shipping_status: "ready",
+        updated_at: now,
+      })
+
+      if (shouldUseCorreoArgentino(shipping.shipping_method)) {
+        await this.tryImportShipmentToCorreo(refreshedOrder, shipping)
+      }
+    }
+
+    if (!refreshedOrder.email_sent) {
+      await this.sendOrderConfirmationEmail(refreshedOrder)
+
+      await orderService.updateOrder(refreshedOrder.id, {
+        email_sent: true,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+
+  async rejectBankTransferOrder(
+    orderId: string,
+    reason?: string
+  ): Promise<void> {
+    const adminUser = await userService.getUser()
+    if (!adminUser || adminUser.role !== "admin") {
+      throw new ValidationException("Solo administradores.")
+    }
+
+    const order = await orderService.getOrderById(orderId)
+
+    if (order.payment_type !== BANK_TRANSFER_PAYMENT_TYPE) {
+      throw new ValidationException(
+        "Esta orden no se paga por transferencia bancaria."
+      )
+    }
+
+    const now = new Date().toISOString()
+    const cleanReason = reason?.trim() || null
+
+    await orderService.updateOrder(order.id, {
+      payment_proof_status: "rejected",
+      payment_proof_reviewed_at: now,
+      payment_proof_reviewed_by: adminUser.id,
+      payment_proof_rejection_reason: cleanReason,
+      collection_status: "rejected",
+      updated_at: now,
+    })
+
+    try {
+      const customer = await userService.getUserById(order.user_id)
+      await emailService.sendTransferRejectedEmail({
+        email: customer.email,
+        name: customer.name,
+        order,
+        reason: cleanReason,
+      })
+    } catch (error) {
+      console.error("[BankTransfer:rejectedEmail]", error)
+    }
   }
 
   private async tryImportShipmentToCorreo(

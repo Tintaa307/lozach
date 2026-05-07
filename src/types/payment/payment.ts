@@ -38,3 +38,10 @@ export type CreateBankTransferOrderResponse = {
   total_amount: number
   discount_amount: number
 }
+
+export type CreateCashStoreOrderResponse = {
+  redirect_url: string
+  external_reference: string
+  total_amount: number
+  discount_amount: number
+}

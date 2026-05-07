@@ -179,8 +179,26 @@ export default function CheckoutClient({
       return
     }
 
-    if (!formData.postal_code.trim()) {
+    let destinationPostalCode = ""
+
+    if (method === "branch") {
+      if (!formData.agency_code) {
+        setQuote(null)
+        setQuoteError(null)
+        return
+      }
+      const agency = agencies.find(
+        (item) => item.code === formData.agency_code
+      )
+      destinationPostalCode =
+        (agency?.postalCode || "").trim() || formData.postal_code.trim()
+    } else {
+      destinationPostalCode = formData.postal_code.trim()
+    }
+
+    if (!destinationPostalCode) {
       setQuote(null)
+      setQuoteError(null)
       return
     }
 
@@ -199,7 +217,7 @@ export default function CheckoutClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             products: quoteItems,
-            postalCode: formData.postal_code.trim(),
+            postalCode: destinationPostalCode,
           }),
         })
         const payload = await response.json()
@@ -229,7 +247,13 @@ export default function CheckoutClient({
       cancelled = true
       window.clearTimeout(timeoutId)
     }
-  }, [formData.postal_code, method, quoteItems])
+  }, [
+    formData.postal_code,
+    formData.agency_code,
+    method,
+    quoteItems,
+    agencies,
+  ])
 
   useEffect(() => {
     if (method !== "branch") {

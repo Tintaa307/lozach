@@ -13,7 +13,10 @@ const schema = z.object({
       })
     )
     .min(1),
-  postalCode: z.string().trim().regex(/^\d{4,8}$/),
+  postalCode: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]?\d{4}[A-Za-z]{0,3}$/),
 })
 
 export async function POST(request: NextRequest) {

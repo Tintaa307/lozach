@@ -23,6 +23,7 @@ import {
   calculateBankTransferDiscount,
   calculateCashStoreDiscount,
 } from "@/lib/utils/payment-utils"
+import { ARGENTINA_PROVINCES } from "@/lib/consts/shipping"
 import { Address } from "@/types/address/address"
 import { AppActionException } from "@/types/exceptions"
 import {
@@ -716,12 +717,22 @@ export default function CheckoutClient({
                     </div>
                     <div>
                       <Label htmlFor="state">Provincia</Label>
-                      <Input
-                        id="state"
+                      <Select
                         value={formData.state}
-                        onChange={(e) => setField("state", e.target.value)}
+                        onValueChange={(value) => setField("state", value)}
                         disabled={useSavedAddress}
-                      />
+                      >
+                        <SelectTrigger id="state">
+                          <SelectValue placeholder="Seleccioná una provincia" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ARGENTINA_PROVINCES.map((province) => (
+                            <SelectItem key={province} value={province}>
+                              {province}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">

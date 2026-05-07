@@ -582,23 +582,10 @@ export class CorreoArgentinoService {
     agencies: CorreoArgentinoAgency[],
     params: AgenciesParams
   ): CorreoArgentinoAgency[] {
-    const postalCode = normalizeText(params.postalCode || "")
     const city = normalizeText(params.city || "")
     let candidates = agencies
 
-    if (postalCode) {
-      const postalCodeMatches = candidates.filter(
-        (agency) => normalizeText(agency.postalCode) === postalCode
-      )
-
-      if (postalCodeMatches.length === 0) {
-        return []
-      }
-
-      candidates = postalCodeMatches
-    }
-
-    if (!postalCode && city) {
+    if (city) {
       const cityMatches = candidates.filter((agency) => {
         const agencyCity = normalizeText(agency.city)
         const agencyAddress = normalizeText(agency.address)

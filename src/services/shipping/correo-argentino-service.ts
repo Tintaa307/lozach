@@ -498,17 +498,31 @@ export class CorreoArgentinoService {
       getRecord(agency.domicile) ||
       {}
 
+    const fullAddressText = getString(
+      agency.fullAddress ||
+        agency.fullDescription ||
+        agency.formattedAddress ||
+        agency.addressDescription
+    )
     const postalCode =
       getString(
         address.postalCode ||
           address.zipCode ||
           address.cp ||
+          address.cpa ||
+          address.codigoPostal ||
+          address.codPostal ||
           location.postalCode ||
           location.zipCode ||
+          location.codigoPostal ||
           agency.postalCode ||
           agency.zipCode ||
-          agency.cp
+          agency.cp ||
+          agency.cpa ||
+          agency.codigoPostal ||
+          agency.codPostal
       ) ||
+      extractPostalCodeFromText(fullAddressText) ||
       ""
 
     const street = [
@@ -755,6 +769,20 @@ export class CorreoArgentinoService {
 
 function getNumericPostalCode(value: string): string {
   return value.replace(/\D/g, "")
+}
+
+function extractPostalCodeFromText(value: string): string {
+  if (!value) {
+    return ""
+  }
+
+  const cpaMatch = value.match(/\b[A-Z]\d{4}[A-Z]{3}\b/i)
+  if (cpaMatch) {
+    return cpaMatch[0]
+  }
+
+  const numericMatch = value.match(/\b\d{4}\b/)
+  return numericMatch ? numericMatch[0] : ""
 }
 
 function normalizeText(value: string): string {

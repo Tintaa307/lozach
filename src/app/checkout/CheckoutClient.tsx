@@ -608,7 +608,13 @@ export default function CheckoutClient({
                                 }
                               />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent
+                              position="popper"
+                              side="bottom"
+                              sideOffset={4}
+                              avoidCollisions={false}
+                              className="max-h-72"
+                            >
                               {agencies.map((agency) => (
                                 <SelectItem
                                   key={agency.code}

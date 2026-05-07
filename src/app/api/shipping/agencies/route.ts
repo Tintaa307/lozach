@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
       request.nextUrl.searchParams.get("postalCode")?.trim() || undefined
     const city = request.nextUrl.searchParams.get("city")?.trim() || undefined
     const limitParam = request.nextUrl.searchParams.get("limit")
-    const limit = limitParam ? Number(limitParam) : undefined
+    const parsedLimit = limitParam ? Number(limitParam) : undefined
+    const limit = Number.isFinite(parsedLimit) && (parsedLimit as number) > 0
+      ? Math.min(parsedLimit as number, 50)
+      : 30
 
     if (!province) {
       return NextResponse.json(
@@ -26,7 +29,7 @@ export async function GET(request: NextRequest) {
       province,
       postalCode,
       city,
-      limit: Number.isFinite(limit) ? limit : undefined,
+      limit,
     })
 
     return NextResponse.json(agencies)

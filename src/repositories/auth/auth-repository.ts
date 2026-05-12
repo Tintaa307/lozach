@@ -13,6 +13,76 @@ import {
 } from "@/exceptions/auth/auth-exceptions"
 import { ValidationException } from "@/exceptions/base/base-exceptions"
 
+function mapSupabaseLoginError(error: {
+  code?: string
+  message: string
+  status?: number
+}): string {
+  const code = error.code?.toLowerCase() ?? ""
+  const message = error.message?.toLowerCase() ?? ""
+
+  if (code === "invalid_credentials" || message.includes("invalid login")) {
+    return "Email o contraseña incorrectos"
+  }
+  if (code === "email_not_confirmed" || message.includes("email not confirmed")) {
+    return "Tu email todavía no fue confirmado. Revisá tu correo."
+  }
+  if (code === "user_not_found" || message.includes("user not found")) {
+    return "No existe una cuenta con ese email"
+  }
+  if (
+    code === "over_request_rate_limit" ||
+    code === "over_email_send_rate_limit" ||
+    message.includes("rate limit")
+  ) {
+    return "Demasiados intentos. Esperá unos minutos e intentá de nuevo."
+  }
+  if (message.includes("network") || message.includes("fetch")) {
+    return "Error de conexión. Verificá tu internet."
+  }
+  return "No pudimos iniciar sesión. Intentá nuevamente."
+}
+
+function mapSupabaseSignUpError(error: {
+  code?: string
+  message: string
+  status?: number
+}): string {
+  const code = error.code?.toLowerCase() ?? ""
+  const message = error.message?.toLowerCase() ?? ""
+
+  if (
+    code === "user_already_exists" ||
+    code === "email_exists" ||
+    message.includes("already registered") ||
+    message.includes("already exists") ||
+    message.includes("user already")
+  ) {
+    return "Ya existe una cuenta con ese email"
+  }
+  if (
+    code === "weak_password" ||
+    message.includes("password should be") ||
+    message.includes("weak password")
+  ) {
+    return "La contraseña es demasiado débil. Usá al menos 8 caracteres."
+  }
+  if (code === "invalid_email" || message.includes("invalid email")) {
+    return "El email no es válido"
+  }
+  if (
+    code === "over_email_send_rate_limit" ||
+    code === "over_request_rate_limit" ||
+    message.includes("rate limit")
+  ) {
+    return "Demasiados intentos. Esperá unos minutos e intentá de nuevo."
+  }
+  if (message.includes("network") || message.includes("fetch")) {
+    return "Error de conexión. Verificá tu internet."
+  }
+  return "No pudimos crear la cuenta. Intentá nuevamente."
+}
+
 export class AuthRepository {
   async createUser(values: CreateUserValues): Promise<PublicUser> {
     const supabase = await createClient()
@@ -43,12 +113,23 @@ export class AuthRepository {
       password: values.password,
     })
 
-    console.log(error)
-
     if (error) {
       throw new AuthCreationException(
         error.message,
-        "Error al crear el usuario"
+        mapSupabaseSignUpError(error)
+      )
+    }
+
+    // Supabase puede devolver un user "fantasma" cuando el email ya existe
+    // (sin error) — detectamos identities vacíos para avisar bien al usuario.
+    if (
+      authData?.user &&
+      Array.isArray(authData.user.identities) &&
+      authData.user.identities.length === 0
+    ) {
+      throw new AuthCreationException(
+        "Email already registered",
+        "Ya existe una cuenta con ese email"
       )
     }
 
@@ -75,7 +156,7 @@ export class AuthRepository {
     if (userError) {
       throw new AuthCreationException(
         userError.message,
-        "Error al crear el perfil de usuario"
+        "No pudimos crear tu perfil. Intentá nuevamente."
       )
     }
 
@@ -111,7 +192,7 @@ export class AuthRepository {
     })
 
     if (error) {
-      throw new AuthLoginException(error.message, "Error al iniciar sesión")
+      throw new AuthLoginException(error.message, mapSupabaseLoginError(error))
     }
 
     // Get user data from users table
@@ -124,14 +205,14 @@ export class AuthRepository {
     if (userDataError) {
       throw new AuthMissingUserException(
         userDataError.message,
-        "Error al obtener el usuario"
+        "No encontramos tu perfil. Contactá a soporte."
       )
     }
 
     if (!userData) {
       throw new AuthMissingUserException(
         "Usuario no encontrado",
-        "Usuario no encontrado"
+        "No encontramos tu perfil. Contactá a soporte."
       )
     }
 

@@ -11,6 +11,7 @@ import { ValidationException } from "@/exceptions/base/base-exceptions"
 import {
   AuthCreationException,
   AuthLoginException,
+  AuthMissingUserException,
 } from "@/exceptions/auth/auth-exceptions"
 
 const authService = new AuthService()
@@ -67,7 +68,10 @@ export const loginUser = async (
       }
     }
 
-    if (error instanceof AuthLoginException) {
+    if (
+      error instanceof AuthLoginException ||
+      error instanceof AuthMissingUserException
+    ) {
       return {
         success: false,
         message: error.userMessage,

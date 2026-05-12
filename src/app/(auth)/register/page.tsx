@@ -9,13 +9,20 @@ import { Mail, Lock, User, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useState } from "react"
 import { toast } from "sonner"
 import { createUser } from "@/controllers/auth/auth-controller"
 
-export default function LoginForm() {
+function isSafeRedirect(path: string | null): path is string {
+  return !!path && path.startsWith("/") && !path.startsWith("//")
+}
+
+function RegisterFormContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectParam = searchParams.get("redirect")
+
   const [isLoading, setIsLoading] = useState(false)
 
   const [password, setPassword] = useState("")
@@ -25,9 +32,11 @@ export default function LoginForm() {
 
   const validatePasswords = () => {
     if (password !== confirmPassword) {
+      toast.error("Las contraseñas no coinciden")
       return false
     }
     if (password.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres")
       return false
     }
     return true
@@ -37,10 +46,16 @@ export default function LoginForm() {
 
   const handleSubmitWithGoogle = async () => {
     try {
+      const callback = isSafeRedirect(redirectParam)
+        ? `https://lozachurban.store/auth/callback?redirect=${encodeURIComponent(
+            redirectParam
+          )}`
+        : "https://lozachurban.store/auth/callback"
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://lozachurban.store/auth/callback",
+          redirectTo: callback,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -49,15 +64,10 @@ export default function LoginForm() {
       })
 
       if (error) {
-        console.log(error)
-        return
+        toast.error("No pudimos registrarte con Google. Intentá nuevamente.")
       }
-
-      return
-    } catch (error) {
-      console.log(error)
-
-      return
+    } catch {
+      toast.error("No pudimos registrarte con Google. Intentá nuevamente.")
     }
   }
 
@@ -66,36 +76,27 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      if (validatePasswords() === false) {
-        return toast.error("Las contraseñas no coinciden")
+      if (!validatePasswords()) {
+        return
       }
 
-      const values = {
-        name: name,
-        email: email,
-        password: password,
-      }
-
-      const response = await createUser(values)
+      const response = await createUser({ name, email, password })
 
       if (!response.success) {
-        setIsLoading(false)
         if (response.fieldErrors) {
           Object.values(response.fieldErrors)
             .flat()
-            .forEach((error) => toast.error(error))
+            .forEach((err) => toast.error(err))
         } else {
-          toast.error(response.message || "Error al crear la cuenta")
+          toast.error(response.message || "No pudimos crear la cuenta")
         }
         return
       }
 
-      setIsLoading(false)
       toast.success("Cuenta creada correctamente")
-      return router.push(`/confirm?email=${values.email}`)
-    } catch (error) {
-      console.error(error)
-      toast.error("Error al crear la cuenta")
+      router.push(`/confirm?email=${encodeURIComponent(email)}`)
+    } catch {
+      toast.error("Ocurrió un error inesperado. Intentá nuevamente.")
     } finally {
       setIsLoading(false)
     }
@@ -266,7 +267,14 @@ export default function LoginForm() {
           <div className="flex items-center justify-center">
             <p className="text-sm">
               ¿Ya tienes una cuenta?{" "}
-              <Link href="/register" className="text-black underline text-sm">
+              <Link
+                href={
+                  isSafeRedirect(redirectParam)
+                    ? `/login?redirect=${encodeURIComponent(redirectParam)}`
+                    : "/login"
+                }
+                className="text-black underline text-sm"
+              >
                 Inicia sesión
               </Link>
             </p>
@@ -274,5 +282,13 @@ export default function LoginForm() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function RegisterForm() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterFormContent />
+    </Suspense>
   )
 }

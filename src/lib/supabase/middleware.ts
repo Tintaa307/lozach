@@ -87,7 +87,9 @@ export async function updateSession(request: NextRequest) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
-      // Crear redirect manteniendo las cookies del supabaseResponse
+      url.search = ""
+      url.searchParams.set("redirect", "/checkout")
+      url.searchParams.set("reason", "checkout")
       const redirectResponse = NextResponse.redirect(url)
       supabaseResponse.cookies.getAll().forEach((cookie) => {
         redirectResponse.cookies.set(cookie.name, cookie.value)
@@ -101,7 +103,9 @@ export async function updateSession(request: NextRequest) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
-      // Crear redirect manteniendo las cookies del supabaseResponse
+      url.search = ""
+      url.searchParams.set("redirect", pathname)
+      url.searchParams.set("reason", "auth")
       const redirectResponse = NextResponse.redirect(url)
       supabaseResponse.cookies.getAll().forEach((cookie) => {
         redirectResponse.cookies.set(cookie.name, cookie.value)

@@ -9,27 +9,49 @@ import { Mail, Lock, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useEffect, useState } from "react"
 import { loginUser } from "@/controllers/auth/auth-controller"
 import { toast } from "sonner"
-import { ZodError } from "zod"
 
-export default function LoginForm() {
+function isSafeRedirect(path: string | null): path is string {
+  return !!path && path.startsWith("/") && !path.startsWith("//")
+}
+
+function LoginFormContent() {
   const supabase = createClient()
 
   const [password, setPassword] = useState("")
   const [email, setEmail] = useState("")
 
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectParam = searchParams.get("redirect")
+  const redirectTo = isSafeRedirect(redirectParam) ? redirectParam : "/"
+  const reason = searchParams.get("reason")
+
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (reason === "checkout") {
+      toast.info("Iniciá sesión para finalizar tu compra")
+    } else if (reason === "auth") {
+      toast.info("Necesitás iniciar sesión para continuar")
+    }
+  }, [reason])
 
   const handleSubmitWithGoogle = async () => {
     try {
+      const callback = isSafeRedirect(redirectParam)
+        ? `https://lozachurban.store/auth/callback?redirect=${encodeURIComponent(
+            redirectParam
+          )}`
+        : "https://lozachurban.store/auth/callback"
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://lozachurban.store/auth/callback",
+          redirectTo: callback,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -38,15 +60,11 @@ export default function LoginForm() {
       })
 
       if (error) {
-        console.log(error)
+        toast.error("No pudimos iniciar sesión con Google. Intentá nuevamente.")
         return
       }
-
-      return
-    } catch (error) {
-      console.log(error)
-
-      return
+    } catch {
+      toast.error("No pudimos iniciar sesión con Google. Intentá nuevamente.")
     }
   }
 
@@ -55,30 +73,25 @@ export default function LoginForm() {
     setIsLoading(true)
 
     try {
-      const values = {
-        email,
-        password,
-      }
-
-      const response = await loginUser(values)
+      const response = await loginUser({ email, password })
 
       if (!response.success) {
-        setIsLoading(false)
-        toast.error(response.message || "Error al iniciar sesión")
+        if (response.fieldErrors) {
+          Object.values(response.fieldErrors)
+            .flat()
+            .forEach((err) => toast.error(err))
+        } else {
+          toast.error(response.message || "No pudimos iniciar sesión")
+        }
         return
       }
 
-      setIsLoading(false)
       toast.success("Inicio de sesión exitoso")
-
-      return router.push("/")
-    } catch (error) {
+      router.push(redirectTo)
+    } catch {
+      toast.error("Ocurrió un error inesperado. Intentá nuevamente.")
+    } finally {
       setIsLoading(false)
-      if (error instanceof ZodError) {
-        error.errors.forEach((err) => {
-          toast.error(err.message)
-        })
-      }
     }
   }
 
@@ -213,7 +226,14 @@ export default function LoginForm() {
           <div className="flex items-center justify-center">
             <p className="text-sm">
               ¿No tienes una cuenta?{" "}
-              <Link href="/register" className="text-black underline text-sm">
+              <Link
+                href={
+                  isSafeRedirect(redirectParam)
+                    ? `/register?redirect=${encodeURIComponent(redirectParam)}`
+                    : "/register"
+                }
+                className="text-black underline text-sm"
+              >
                 Regístrate
               </Link>
             </p>
@@ -221,5 +241,13 @@ export default function LoginForm() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function LoginForm() {
+  return (
+    <Suspense fallback={null}>
+      <LoginFormContent />
+    </Suspense>
   )
 }

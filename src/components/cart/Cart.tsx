@@ -16,13 +16,40 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/context/CartContext" // Asegúrate de la ruta correcta
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 
 export function CartSheet() {
   const [isOpen, setIsOpen] = React.useState(false)
+  const [isCheckingOut, setIsCheckingOut] = React.useState(false)
   const { cartItems, updateQuantity, removeItem, subtotal, isInitialized } =
     useCart()
 
   const router = useRouter()
+  const supabase = React.useMemo(() => createClient(), [])
+
+  const handleCheckout = async () => {
+    if (isCheckingOut) return
+    setIsCheckingOut(true)
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        toast.info("Iniciá sesión para finalizar tu compra")
+        setIsOpen(false)
+        router.push("/login?redirect=/checkout&reason=checkout")
+        return
+      }
+
+      setIsOpen(false)
+      router.push("/checkout")
+    } finally {
+      setIsCheckingOut(false)
+    }
+  }
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
 
@@ -152,13 +179,11 @@ export function CartSheet() {
                 </div>
               </div>
               <Button
-                onClick={() => {
-                  setIsOpen(false)
-                  router.push("/checkout")
-                }}
+                onClick={handleCheckout}
+                disabled={isCheckingOut}
                 className="w-full"
               >
-                FINALIZAR COMPRA
+                {isCheckingOut ? "PROCESANDO..." : "FINALIZAR COMPRA"}
               </Button>
               <Button
                 variant="outline"

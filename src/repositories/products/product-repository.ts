@@ -70,6 +70,12 @@ export class ProductRepository {
         ? this.normalizeStringArray((rawSize as { talles?: unknown }).talles)
         : this.normalizeStringArray(rawSize)
 
+    const sizeGuideRaw = (product as { size_guide?: unknown }).size_guide
+    const size_guide =
+      sizeGuideRaw && typeof sizeGuideRaw === "object"
+        ? (sizeGuideRaw as Product["size_guide"])
+        : null
+
     return {
       ...(product as Product),
       color: this.normalizeStringArray(product.color),
@@ -79,6 +85,9 @@ export class ProductRepository {
             (imageUrl): imageUrl is string => typeof imageUrl === "string"
           )
         : [],
+      size_guide_id:
+        product.size_guide_id === undefined ? null : product.size_guide_id,
+      size_guide,
     }
   }
 
@@ -151,7 +160,7 @@ export class ProductRepository {
 
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("*, size_guide:size_guides(*)")
         .eq("id", id)
         .single()
 
@@ -315,6 +324,7 @@ export class ProductRepository {
         shipping_height_cm: values.shipping_height_cm ?? null,
         shipping_width_cm: values.shipping_width_cm ?? null,
         shipping_length_cm: values.shipping_length_cm ?? null,
+        size_guide_id: values.size_guide_id ?? null,
         created_at: new Date().toISOString(),
         sku:
           values.name.slice(0, 3).toUpperCase() +

@@ -17,6 +17,7 @@ import { useCart } from "@/context/CartContext"
 import { toast } from "sonner"
 import { capitalizeFirstLetter, cn } from "@/lib/utils"
 import { createFavorite } from "@/controllers/favorites/favorite-controller"
+import { SizeGuideSheet } from "@/components/products/size-guide-sheet"
 
 interface ProductDetailProps {
   product: Product
@@ -205,9 +206,12 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
         {/* Size Selector */}
         <div className="space-y-2">
-          <Label htmlFor="size" className="text-sm font-medium">
-            Talle
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="size" className="text-sm font-medium">
+              Talle
+            </Label>
+            {product.size_guide && <SizeGuideSheet guide={product.size_guide} />}
+          </div>
           <Select
             onValueChange={(value) => setSelectedSize(value)}
             value={selectedSize}

@@ -1,5 +1,7 @@
 // Legacy types - these are now in separate files
 // This file is kept for backward compatibility
+import { SizeGuide } from "@/types/size-guides/types"
+
 export interface Product {
   id: number
   created_at: string
@@ -20,6 +22,8 @@ export interface Product {
   shipping_height_cm: number | null
   shipping_width_cm: number | null
   shipping_length_cm: number | null
+  size_guide_id: number | null
+  size_guide?: SizeGuide | null
 }
 
 export interface PublicUser {

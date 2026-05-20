@@ -6,7 +6,8 @@
       "Bash(find /d/valentin-gonzalez/dev/lozach -type f \\\\\\(-name *webhook* -o -name *payment* -o -name *checkout* \\\\\\))",
       "Bash(grep -r \"MERCADO_PAGO\\\\|mercadopago\" /d/valentin-gonzalez/dev/lozach/src --include=*.ts --include=*.tsx --include=*.json)",
       "Bash(find /d/valentin-gonzalez/dev/lozach/src/app/api -type f -name *.ts)",
-      "Bash(xargs grep -l \"orders\")"
+      "Bash(xargs grep -l \"orders\")",
+      "Bash(dir D:valentin-gonzalezdevlozach *)"
     ]
   }
 }

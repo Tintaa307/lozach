@@ -8,6 +8,7 @@ import {
   Users,
   ArrowLeft,
   Package2,
+  Ruler,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -50,6 +51,11 @@ export function AppSidebar({ user = defaultUser, ...props }: AppSidebarProps) {
         title: "Catálogo",
         url: "/dashboard/catalog",
         icon: Package2,
+      },
+      {
+        title: "Guías de talles",
+        url: "/dashboard/size-guides",
+        icon: Ruler,
       },
       {
         title: "Ventas",

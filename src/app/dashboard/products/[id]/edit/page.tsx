@@ -1,5 +1,6 @@
 import { getUser } from "@/controllers/auth/auth-controller"
 import { getProductById } from "@/controllers/products/product-controller"
+import { getAllSizeGuides } from "@/controllers/admin/admin-size-guides-controller"
 import { redirect, notFound } from "next/navigation"
 import { EditProductFormClient } from "@/components/dashboard/EditProductFormClient"
 import { AdminShell } from "@/components/dashboard/AdminShell"
@@ -38,6 +39,11 @@ export default async function EditProductPage({
   }
 
   const product = productResult.data
+  const sizeGuidesResult = await getAllSizeGuides()
+  const sizeGuides =
+    sizeGuidesResult.success && sizeGuidesResult.data
+      ? sizeGuidesResult.data
+      : []
 
   const sidebarUser = {
     name: user.name,
@@ -47,7 +53,7 @@ export default async function EditProductPage({
 
   return (
     <AdminShell user={sidebarUser}>
-      <EditProductFormClient product={product} />
+      <EditProductFormClient product={product} sizeGuides={sizeGuides} />
     </AdminShell>
   )
 }

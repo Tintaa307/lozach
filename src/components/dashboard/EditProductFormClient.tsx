@@ -18,6 +18,7 @@ import {
   deleteProductImagesClientAction,
 } from "@/controllers/storage/storage-client-controller"
 import { Product, UpdateProductValues } from "@/types/products/types"
+import { SizeGuide } from "@/types/size-guides/types"
 import { toast } from "sonner"
 import { ImageUpload } from "@/components/dashboard/ImageUpload"
 import { MiniCardManager } from "@/components/dashboard/MiniCardManager"
@@ -33,9 +34,15 @@ const parseNullableNumber = (value: string) => {
 
 interface EditProductFormClientProps {
   product: Product
+  sizeGuides: SizeGuide[]
 }
 
-export function EditProductFormClient({ product }: EditProductFormClientProps) {
+const NO_SIZE_GUIDE_VALUE = "none"
+
+export function EditProductFormClient({
+  product,
+  sizeGuides,
+}: EditProductFormClientProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isUploadingImages, setIsUploadingImages] = useState(false)
 
@@ -64,6 +71,7 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
     shipping_height_cm: product.shipping_height_cm ?? 10,
     shipping_width_cm: product.shipping_width_cm ?? 20,
     shipping_length_cm: product.shipping_length_cm ?? 15,
+    size_guide_id: product.size_guide_id ?? null,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -422,6 +430,47 @@ export function EditProductFormClient({ product }: EditProductFormClientProps) {
               label="Tallas"
               addButtonText="Agregar"
             />
+
+            {/* Guía de talles */}
+            <div className="space-y-2">
+              <Label htmlFor="size_guide_id">Guía de talles</Label>
+              <Select
+                value={
+                  formData.size_guide_id == null
+                    ? NO_SIZE_GUIDE_VALUE
+                    : String(formData.size_guide_id)
+                }
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    size_guide_id:
+                      value === NO_SIZE_GUIDE_VALUE ? null : Number(value),
+                  }))
+                }
+              >
+                <SelectTrigger id="size_guide_id">
+                  <SelectValue placeholder="Sin guía de talles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_SIZE_GUIDE_VALUE}>
+                    Sin guía de talles
+                  </SelectItem>
+                  {sizeGuides.map((guide) => (
+                    <SelectItem key={guide.id} value={String(guide.id)}>
+                      {guide.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                <Link
+                  href="/dashboard/size-guides"
+                  className="underline hover:no-underline"
+                >
+                  Administrar guías de talles
+                </Link>
+              </p>
+            </div>
 
             {/* Imagen de Portada */}
             <ImageUpload

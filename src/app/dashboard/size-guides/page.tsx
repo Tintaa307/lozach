@@ -1,11 +1,11 @@
+import { redirect } from "next/navigation"
+
 import { getUser } from "@/controllers/auth/auth-controller"
 import { getAllSizeGuides } from "@/controllers/admin/admin-size-guides-controller"
-import { redirect } from "next/navigation"
-import { ProductFormClient } from "@/components/dashboard/ProductFormClient"
 import { AdminShell } from "@/components/dashboard/AdminShell"
+import { SizeGuidesListClient } from "@/components/dashboard/SizeGuidesListClient"
 
-export default async function DashboardProductsPage() {
-  // Verificar autenticación y rol de admin
+export default async function DashboardSizeGuidesPage() {
   const userResult = await getUser()
   if (
     !userResult.success ||
@@ -16,11 +16,8 @@ export default async function DashboardProductsPage() {
   }
 
   const user = userResult.data
-  const sizeGuidesResult = await getAllSizeGuides()
-  const sizeGuides =
-    sizeGuidesResult.success && sizeGuidesResult.data
-      ? sizeGuidesResult.data
-      : []
+  const result = await getAllSizeGuides()
+  const guides = result.success && result.data ? result.data : []
 
   const sidebarUser = {
     name: user.name,
@@ -30,7 +27,7 @@ export default async function DashboardProductsPage() {
 
   return (
     <AdminShell user={sidebarUser}>
-      <ProductFormClient sizeGuides={sizeGuides} />
+      <SizeGuidesListClient guides={guides} />
     </AdminShell>
   )
 }

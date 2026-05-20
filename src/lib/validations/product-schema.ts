@@ -27,6 +27,12 @@ export const CreateProductSchema = z.object({
   shipping_height_cm: nullablePositiveNumber("El alto"),
   shipping_width_cm: nullablePositiveNumber("El ancho"),
   shipping_length_cm: nullablePositiveNumber("El largo"),
+  size_guide_id: z
+    .number({ invalid_type_error: "La guía de talles debe ser un número" })
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
 })
 
 export const UpdateProductSchema = z.object({
@@ -54,6 +60,12 @@ export const UpdateProductSchema = z.object({
   shipping_height_cm: nullablePositiveNumber("El alto"),
   shipping_width_cm: nullablePositiveNumber("El ancho"),
   shipping_length_cm: nullablePositiveNumber("El largo"),
+  size_guide_id: z
+    .number({ invalid_type_error: "La guía de talles debe ser un número" })
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
 })
 
 export type CreateProductValues = z.infer<typeof CreateProductSchema>

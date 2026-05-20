@@ -1,3 +1,5 @@
+import { SizeGuide } from "@/types/size-guides/types"
+
 export type CategoryType = "adult" | "child"
 
 export interface Product {
@@ -20,6 +22,8 @@ export interface Product {
   shipping_height_cm: number | null
   shipping_width_cm: number | null
   shipping_length_cm: number | null
+  size_guide_id: number | null
+  size_guide?: SizeGuide | null
 }
 
 export interface CreateProductValues {
@@ -39,6 +43,7 @@ export interface CreateProductValues {
   shipping_height_cm?: number | null
   shipping_width_cm?: number | null
   shipping_length_cm?: number | null
+  size_guide_id?: number | null
 }
 
 export interface UpdateProductValues {
@@ -58,6 +63,7 @@ export interface UpdateProductValues {
   shipping_height_cm?: number | null
   shipping_width_cm?: number | null
   shipping_length_cm?: number | null
+  size_guide_id?: number | null
 }
 
 export interface ProductFilters {

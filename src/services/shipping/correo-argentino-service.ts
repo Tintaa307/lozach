@@ -12,6 +12,7 @@ import {
   CorreoArgentinoAgency,
   Shipping,
   ShippingQuote,
+  ShippingStatus,
 } from "@/types/shipping/shipping"
 
 type QuoteParams = {
@@ -45,6 +46,32 @@ type ParsedRate = {
   deliveredType?: "D" | "S"
   price: number | null
   estimatedDays: number | null
+}
+
+export type ImportShipmentResult = {
+  trackingNumber: string | null
+  trackingUrl: string | null
+}
+
+type TrackingEvent = {
+  text: string
+  status: ShippingStatus | null
+}
+
+export type TrackingResult = {
+  events: TrackingEvent[]
+  status: ShippingStatus | null
+  lastEventText: string | null
+}
+
+// Mayor rango = estado más avanzado. Se usa para elegir el evento más reciente
+// sin depender del orden en que la API devuelva el historial.
+export const STATUS_RANK: Record<ShippingStatus, number> = {
+  draft: 0,
+  ready: 1,
+  shipped: 2,
+  cancelled: 3,
+  delivered: 4,
 }
 
 const productService = new ProductService()
@@ -195,11 +222,13 @@ export class CorreoArgentinoService {
     return rankedAgencies
   }
 
-  async importShipment(params: ImportShipmentParams): Promise<void> {
+  async importShipment(
+    params: ImportShipmentParams
+  ): Promise<ImportShipmentResult | null> {
     const shippingMethod = normalizeShippingMethod(params.shipping.shipping_method)
 
     if (!shouldUseCorreoArgentino(params.shipping.shipping_method)) {
-      return
+      return null
     }
 
     this.assertImportConfiguration()
@@ -278,18 +307,154 @@ export class CorreoArgentinoService {
     }
 
     try {
-      await this.request("/shipping/import", {
+      const response = await this.request<unknown>("/shipping/import", {
         method: "POST",
         body: payload,
       })
+      return this.parseImportResult(response)
     } catch (error) {
       const message = getErrorMessage(error)
       if (message.toLowerCase().includes("ya fue importada")) {
-        return
+        return null
       }
 
       throw error
     }
+  }
+
+  async getTracking(params: {
+    trackingNumber: string
+  }): Promise<TrackingResult | null> {
+    if (!this.isAgencyConfigured() || !params.trackingNumber) {
+      return null
+    }
+
+    const query = new URLSearchParams({
+      customerId: this.customerId as string,
+      trackingNumber: params.trackingNumber,
+    })
+
+    try {
+      const response = await this.request<unknown>(
+        `/shipping/tracking?${query}`,
+        { method: "GET" }
+      )
+
+      const events = this.parseTrackingEvents(response)
+
+      let status: ShippingStatus | null = null
+      let lastEventText: string | null = null
+
+      for (const event of events) {
+        if (!event.status) {
+          continue
+        }
+        if (status === null || STATUS_RANK[event.status] > STATUS_RANK[status]) {
+          status = event.status
+          lastEventText = event.text
+        }
+      }
+
+      if (!lastEventText && events.length > 0) {
+        lastEventText = events[events.length - 1].text
+      }
+
+      return { events, status, lastEventText }
+    } catch (error) {
+      console.error("[CorreoArgentino:getTracking]", error)
+      return null
+    }
+  }
+
+  private parseImportResult(response: unknown): ImportShipmentResult {
+    const root = getRecord(response) || {}
+    // El contrato de respuesta de /shipping/import no está verificado, así que
+    // buscamos el tracking tanto en la raíz como en contenedores anidados comunes.
+    const candidates: Record<string, unknown>[] = [
+      root,
+      getRecord(root.order) || {},
+      getRecord(root.shipping) || {},
+      getRecord(root.data) || {},
+      getRecord(root.result) || {},
+    ]
+
+    let trackingNumber: string | null = null
+    let trackingUrl: string | null = null
+
+    for (const record of candidates) {
+      if (!trackingNumber) {
+        trackingNumber =
+          getString(
+            record.trackingNumber ||
+              record.tracking ||
+              record.trackingId ||
+              record.trackingCode ||
+              record.shippingId ||
+              record.shipmentId ||
+              record.number ||
+              record.id
+          ) || null
+      }
+
+      if (!trackingUrl) {
+        trackingUrl =
+          getString(
+            record.trackingUrl ||
+              record.url ||
+              record.labelUrl ||
+              record.label ||
+              record.pdf
+          ) || null
+      }
+    }
+
+    return { trackingNumber, trackingUrl }
+  }
+
+  private parseTrackingEvents(response: unknown): TrackingEvent[] {
+    const collection = this.extractTrackingCollection(response)
+
+    return collection
+      .map((raw) => {
+        const text = extractTrackingEventText(raw)
+        return { text, status: mapTrackingTextToStatus(text) }
+      })
+      .filter((event) => Boolean(event.text))
+  }
+
+  private extractTrackingCollection(response: unknown): unknown[] {
+    if (Array.isArray(response)) {
+      return response
+    }
+
+    if (!response || typeof response !== "object") {
+      return []
+    }
+
+    const record = response as Record<string, unknown>
+    const collectionKeys = [
+      "events",
+      "tracking",
+      "trackingHistory",
+      "history",
+      "movements",
+      "results",
+      "data",
+      "items",
+    ]
+
+    for (const key of collectionKeys) {
+      if (Array.isArray(record[key])) {
+        return record[key] as unknown[]
+      }
+    }
+
+    // La API puede devolver un único evento como objeto plano.
+    if (extractTrackingEventText(record)) {
+      return [record]
+    }
+
+    return []
   }
 
   private isQuoteConfigured(): boolean {
@@ -791,6 +956,62 @@ function normalizeText(value: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim()
+}
+
+function extractTrackingEventText(raw: unknown): string {
+  const record = getRecord(raw)
+  if (!record) {
+    return typeof raw === "string" ? raw.trim() : ""
+  }
+
+  const parts = [
+    record.status,
+    record.statusName,
+    record.statusDescription,
+    record.state,
+    record.situation,
+    record.situacion,
+    record.event,
+    record.evento,
+    record.description,
+    record.descripcion,
+    record.motiveDescription,
+    record.detail,
+    record.detalle,
+    record.motivo,
+    record.title,
+    record.titulo,
+  ]
+    .map((value) => getString(value))
+    .filter(Boolean)
+
+  return Array.from(new Set(parts)).join(" \u2014 ")
+}
+
+function mapTrackingTextToStatus(text: string): ShippingStatus | null {
+  const normalized = normalizeText(text)
+  if (!normalized) {
+    return null
+  }
+
+  if (/(entregad|delivered)/.test(normalized)) {
+    return "delivered"
+  }
+  if (/(devolu|returned|cancelad|caduca|fallid|rechaz)/.test(normalized)) {
+    return "cancelled"
+  }
+  if (
+    /(distribuci|reparto|en camino|transit|despach|planta|clasificac)/.test(
+      normalized
+    )
+  ) {
+    return "shipped"
+  }
+  if (/(preimposicion|imposicion|admis|preparaci)/.test(normalized)) {
+    return "ready"
+  }
+
+  return null
 }
 
 function splitStreetAddress(address: string) {

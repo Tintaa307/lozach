@@ -1015,6 +1015,13 @@ export class PaymentService {
       throw new ValidationException("Solo administradores.")
     }
 
+    const cleanReason = reason?.trim()
+    if (!cleanReason) {
+      throw new ValidationException(
+        "Tenés que indicar un motivo para cancelar la orden. El motivo se le envía al cliente."
+      )
+    }
+
     const order = await orderService.getOrderById(orderId)
 
     if (order.payment_type !== BANK_TRANSFER_PAYMENT_TYPE) {
@@ -1024,7 +1031,6 @@ export class PaymentService {
     }
 
     const now = new Date().toISOString()
-    const cleanReason = reason?.trim() || null
 
     await orderService.updateOrder(order.id, {
       payment_proof_status: "rejected",
@@ -1058,13 +1064,21 @@ export class PaymentService {
         orderItemsService.getOrderItemsByOrderId(order.id),
       ])
 
-      await correoArgentinoService.importShipment({
+      const result = await correoArgentinoService.importShipment({
         order,
         shipping,
         orderItems,
         recipientName: user.name,
         recipientEmail: user.email,
       })
+
+      if (result?.trackingNumber) {
+        await shippingService.updateShipping(order.id, {
+          tracking_number: result.trackingNumber,
+          tracking_url: result.trackingUrl,
+          imported_at: new Date().toISOString(),
+        })
+      }
     } catch (error) {
       console.error("[CorreoArgentino:importShipment]", {
         orderId: order.id,

@@ -4,6 +4,7 @@ import { Resend } from "resend"
 import OrderConfirmationEmail from "@/components/email-templates/buy-template"
 import AdminOrderNotificationEmail from "@/components/email-templates/admin-order-template"
 import TransferStatusEmail from "@/components/email-templates/transfer-status-template"
+import ShippingStatusEmail from "@/components/email-templates/shipping-status-template"
 import { Order } from "@/types/order/order"
 
 export class EmailService {
@@ -110,6 +111,68 @@ export class EmailService {
         currency: order.currency,
         variant: "rejected",
         rejectionReason: reason,
+        supportEmail,
+      }),
+      text: "",
+    })
+
+    if (error) {
+      throw new EmailSendingException(error.message)
+    }
+  }
+
+  async sendShipmentInTransitEmail(args: {
+    email: string
+    name: string
+    order: Order
+    trackingNumber?: string | null
+    trackingUrl?: string | null
+  }): Promise<void> {
+    const { email, name, order, trackingNumber, trackingUrl } = args
+    const supportEmail =
+      process.env.NEXT_PUBLIC_SUPPORT_EMAIL || this.adminNotificationEmail
+
+    const { error } = await this.resend.emails.send({
+      from: "Lozach <compras@lozachurban.store>",
+      to: email,
+      subject: "Tu pedido está en camino 🚚",
+      react: ShippingStatusEmail({
+        name,
+        orderId: order.id,
+        variant: "in_transit",
+        trackingNumber,
+        trackingUrl,
+        supportEmail,
+      }),
+      text: "",
+    })
+
+    if (error) {
+      throw new EmailSendingException(error.message)
+    }
+  }
+
+  async sendShipmentDeliveredEmail(args: {
+    email: string
+    name: string
+    order: Order
+    trackingNumber?: string | null
+    trackingUrl?: string | null
+  }): Promise<void> {
+    const { email, name, order, trackingNumber, trackingUrl } = args
+    const supportEmail =
+      process.env.NEXT_PUBLIC_SUPPORT_EMAIL || this.adminNotificationEmail
+
+    const { error } = await this.resend.emails.send({
+      from: "Lozach <compras@lozachurban.store>",
+      to: email,
+      subject: "Tu pedido fue entregado ✅",
+      react: ShippingStatusEmail({
+        name,
+        orderId: order.id,
+        variant: "delivered",
+        trackingNumber,
+        trackingUrl,
         supportEmail,
       }),
       text: "",

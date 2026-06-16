@@ -58,6 +58,27 @@ export class ShippingRepository {
     return data ? (data as Shipping) : null
   }
 
+  async findShipmentsToSync(limit = 25): Promise<Shipping[]> {
+    const supabase = createAdminClient()
+
+    const { data, error } = await supabase
+      .from("shipping")
+      .select("*")
+      .not("tracking_number", "is", null)
+      .not("shipping_status", "in", "(delivered,cancelled)")
+      .order("last_synced_at", { ascending: true, nullsFirst: true })
+      .limit(limit)
+
+    if (error) {
+      throw new ShippingFetchException(
+        error.message,
+        "Error al obtener los envíos a sincronizar"
+      )
+    }
+
+    return data ? (data as Shipping[]) : []
+  }
+
   async updateShipping(
     orderId: string,
     shipping: UpdateShippingValues

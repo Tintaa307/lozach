@@ -47,6 +47,7 @@ const getStatusBadgeColor = (status: ShippingStatus) => {
     draft: "#6B7280",
     ready: "#3B82F6",
     shipped: "#10B981",
+    delivered: "#059669",
     cancelled: "#EF4444",
   }
   return colors[status] || "#6B7280"
@@ -57,6 +58,7 @@ const getStatusLabel = (status: ShippingStatus) => {
     draft: "Borrador",
     ready: "Listo para enviar",
     shipped: "Enviado",
+    delivered: "Entregado",
     cancelled: "Cancelado",
   }
   return labels[status] || status

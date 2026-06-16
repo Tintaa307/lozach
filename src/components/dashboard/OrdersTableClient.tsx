@@ -89,6 +89,18 @@ function getStatus(status: string) {
   )
 }
 
+const shippingStatusLabels: Record<string, string> = {
+  draft: "Borrador",
+  ready: "Preparando",
+  shipped: "En camino",
+  delivered: "Entregado",
+  cancelled: "Cancelado",
+}
+
+function getShippingStatusLabel(status: string) {
+  return shippingStatusLabels[status] || status
+}
+
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -126,6 +138,7 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
     Record<string, ReviewState>
   >({})
   const [rejectReason, setRejectReason] = useState<Record<string, string>>({})
+  const [imageError, setImageError] = useState<Record<string, boolean>>({})
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId))
@@ -155,16 +168,22 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
   }
 
   const handleReject = async (orderId: string) => {
-    const reason = rejectReason[orderId]?.trim() || undefined
+    const reason = rejectReason[orderId]?.trim()
+    if (!reason) {
+      toast.error(
+        "Indicá un motivo para cancelar la orden. Se le envía al cliente."
+      )
+      return
+    }
     setOrderReviewState(orderId, "rejecting")
     try {
       const result = await rejectBankTransferOrder(orderId, reason)
       if (result.success) {
-        toast.success("Comprobante rechazado. Se notificó al cliente.")
+        toast.success("Orden cancelada. Se notificó al cliente con el motivo.")
         setRejectReason((prev) => ({ ...prev, [orderId]: "" }))
         router.refresh()
       } else {
-        toast.error(result.message || "No se pudo rechazar el comprobante.")
+        toast.error(result.message || "No se pudo cancelar la orden.")
       }
     } catch (error) {
       const message =
@@ -405,9 +424,34 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
                                   Estado envío
                                 </span>
                                 <span>
-                                  {shipping?.shipping_status || "Sin registro"}
+                                  {shipping
+                                    ? getShippingStatusLabel(
+                                        shipping.shipping_status
+                                      )
+                                    : "Sin registro"}
                                 </span>
                               </div>
+                              {shipping?.tracking_number && (
+                                <div className="flex justify-between gap-8">
+                                  <span className="text-muted-foreground">
+                                    Seguimiento
+                                  </span>
+                                  {shipping.tracking_url ? (
+                                    <a
+                                      href={shipping.tracking_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:underline font-mono"
+                                    >
+                                      {shipping.tracking_number}
+                                    </a>
+                                  ) : (
+                                    <span className="font-mono">
+                                      {shipping.tracking_number}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -446,21 +490,41 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
 
                           {order.payment_proof_url ? (
                             <>
-                              <div className="grid gap-3 sm:grid-cols-[160px_1fr] items-start">
-                                <div className="rounded-md overflow-hidden border bg-muted aspect-square flex items-center justify-center">
-                                  {/\.pdf$/i.test(
-                                    order.payment_proof_url
-                                  ) ? (
-                                    <FileText className="h-10 w-10 text-muted-foreground" />
+                              <div className="grid gap-3 sm:grid-cols-[200px_1fr] items-start">
+                                <a
+                                  href={order.payment_proof_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Abrir comprobante en tamaño completo"
+                                  className="group flex rounded-md overflow-hidden border bg-muted aspect-[3/4] items-center justify-center"
+                                >
+                                  {/\.pdf$/i.test(order.payment_proof_url) ? (
+                                    <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                                      <FileText className="h-10 w-10" />
+                                      <span className="text-xs">Ver PDF</span>
+                                    </div>
+                                  ) : imageError[order.id] ? (
+                                    <div className="flex flex-col items-center gap-1 text-muted-foreground px-2 text-center">
+                                      <FileText className="h-10 w-10" />
+                                      <span className="text-xs">
+                                        No se pudo cargar la imagen
+                                      </span>
+                                    </div>
                                   ) : (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                       src={order.payment_proof_url}
                                       alt="Comprobante de transferencia"
-                                      className="object-cover w-full h-full"
+                                      className="object-contain w-full h-full transition-transform group-hover:scale-[1.02]"
+                                      onError={() =>
+                                        setImageError((prev) => ({
+                                          ...prev,
+                                          [order.id]: true,
+                                        }))
+                                      }
                                     />
                                   )}
-                                </div>
+                                </a>
                                 <div className="space-y-2 text-sm">
                                   <a
                                     href={order.payment_proof_url}
@@ -493,71 +557,82 @@ export function OrdersTableClient({ orders }: OrdersTableClientProps) {
                                 </div>
                               </div>
 
-                              {order.payment_proof_status !== "approved" && (
-                                <div className="space-y-2 pt-1">
-                                  <textarea
-                                    placeholder="Motivo del rechazo (opcional, se envía al cliente)"
-                                    value={rejectReason[order.id] || ""}
-                                    onChange={(e) =>
-                                      setRejectReason((prev) => ({
-                                        ...prev,
-                                        [order.id]: e.target.value,
-                                      }))
-                                    }
-                                    className="w-full text-sm rounded-md border border-input bg-background px-3 py-2 resize-none min-h-[60px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    disabled={
-                                      reviewState[order.id] !== undefined &&
-                                      reviewState[order.id] !== "idle"
-                                    }
-                                  />
-                                  <div className="flex gap-2 flex-wrap">
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      onClick={() => handleApprove(order.id)}
-                                      disabled={
-                                        reviewState[order.id] !== undefined &&
-                                        reviewState[order.id] !== "idle"
-                                      }
-                                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                                    >
-                                      {reviewState[order.id] === "approving" ? (
-                                        <span className="flex items-center gap-1">
-                                          Aprobando
-                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        </span>
-                                      ) : (
-                                        <span className="flex items-center gap-1">
-                                          <CircleCheck className="h-3.5 w-3.5" />
-                                          Aprobar pago
-                                        </span>
-                                      )}
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() => handleReject(order.id)}
-                                      disabled={
-                                        reviewState[order.id] !== undefined &&
-                                        reviewState[order.id] !== "idle"
-                                      }
-                                    >
-                                      {reviewState[order.id] === "rejecting" ? (
-                                        <span className="flex items-center gap-1">
-                                          Rechazando
-                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        </span>
-                                      ) : (
-                                        <span className="flex items-center gap-1">
-                                          <CircleX className="h-3.5 w-3.5" />
-                                          Rechazar
-                                        </span>
-                                      )}
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
+                              {order.payment_proof_status !== "approved" &&
+                                (() => {
+                                  const isBusy =
+                                    reviewState[order.id] !== undefined &&
+                                    reviewState[order.id] !== "idle"
+                                  const hasReason = Boolean(
+                                    rejectReason[order.id]?.trim()
+                                  )
+                                  return (
+                                    <div className="space-y-2 pt-1">
+                                      <label className="block text-xs font-medium text-muted-foreground">
+                                        Motivo de cancelación{" "}
+                                        <span className="text-red-600">*</span>
+                                      </label>
+                                      <textarea
+                                        placeholder="Obligatorio para cancelar. Ej: el monto no coincide, comprobante ilegible, no figura acreditado… (se le envía al cliente)"
+                                        value={rejectReason[order.id] || ""}
+                                        onChange={(e) =>
+                                          setRejectReason((prev) => ({
+                                            ...prev,
+                                            [order.id]: e.target.value,
+                                          }))
+                                        }
+                                        className="w-full text-sm rounded-md border border-input bg-background px-3 py-2 resize-none min-h-[60px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        disabled={isBusy}
+                                      />
+                                      <div className="flex gap-2 flex-wrap">
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          onClick={() => handleApprove(order.id)}
+                                          disabled={isBusy}
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        >
+                                          {reviewState[order.id] ===
+                                          "approving" ? (
+                                            <span className="flex items-center gap-1">
+                                              Aprobando
+                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            </span>
+                                          ) : (
+                                            <span className="flex items-center gap-1">
+                                              <CircleCheck className="h-3.5 w-3.5" />
+                                              Aprobar pago
+                                            </span>
+                                          )}
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="destructive"
+                                          onClick={() => handleReject(order.id)}
+                                          disabled={isBusy || !hasReason}
+                                          title={
+                                            !hasReason
+                                              ? "Escribí el motivo para poder cancelar"
+                                              : undefined
+                                          }
+                                        >
+                                          {reviewState[order.id] ===
+                                          "rejecting" ? (
+                                            <span className="flex items-center gap-1">
+                                              Cancelando
+                                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            </span>
+                                          ) : (
+                                            <span className="flex items-center gap-1">
+                                              <CircleX className="h-3.5 w-3.5" />
+                                              Cancelar orden
+                                            </span>
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )
+                                })()}
                             </>
                           ) : (
                             <p className="text-sm text-muted-foreground">

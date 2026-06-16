@@ -30,7 +30,7 @@ export const approveBankTransferOrder = async (orderId: string) => {
 
 export const rejectBankTransferOrder = async (
   orderId: string,
-  reason?: string
+  reason: string
 ) => {
   return actionHandler(async () => {
     await verifyAdminRole()
